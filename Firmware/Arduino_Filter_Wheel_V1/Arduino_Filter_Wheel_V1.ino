@@ -5,7 +5,7 @@
 // CONFIGURATION
 // =========================================================
 
-#define DEBUG 0  // Set to 1 for verbose debug output
+#define DEBUG 1  // Set to 1 for verbose debug output
 
 // Pins
 #define SENSOR A3
@@ -29,10 +29,12 @@
 #define stepsPerRevolution 2048
 
 // Filter wheel settings
-#define numberOfFilters 5
+#define maxNumberOfFilters 8
+
 #define offSetResolution 5
-#define homingOffsetSteps 83
-#define backlashOvershoot 100
+#define backlashOvershoot 200
+#define SENSOR_OFFSET 70
+
 
 // Optional peripherals
 #define buzzerConnected 0
@@ -49,8 +51,9 @@
 AccelStepper stepper(4, IN2, IN4, IN1, IN3);
 #endif
 
-int filterPos[numberOfFilters + 1];
-int posOffset[numberOfFilters];
+int numberOfFilters = 5;
+int filterPos[maxNumberOfFilters + 1];
+int16_t posOffset[maxNumberOfFilters + 1];
 
 bool Error = false;
 int currPos = 0;
@@ -60,14 +63,16 @@ bool sensorIsDigital = false;
 bool activeHigh = true;
 int analogSensorThreshold = 650;
 
-// EEPROM addresses
-#define EE_THRESH 10
-#define EE_DIGITAL 12
-#define EE_ACTIVEHIGH 13
 
 // =========================================================
 // EEPROM HELPERS
 // =========================================================
+
+// EEPROM addresses
+#define EE_THRESH 10
+#define EE_DIGITAL 12
+#define EE_ACTIVEHIGH 13
+#define EE_OFFSET_BASE 52
 
 void writeInt(int addr, int value) {
   EEPROM.write(addr, value >> 8);
@@ -84,12 +89,29 @@ void saveSensorSettings() {
   EEPROM.write(EE_ACTIVEHIGH, activeHigh ? 1 : 0);
 }
 
+// Save configuration settings
+void saveConfigSettings() {
+
+  // --- Save number of filters ---
+  EEPROM.write(20, numberOfFilters);
+
+  // --- Save offsets dynamically ---
+  for (int i = 1; i <= numberOfFilters; i++) {
+    int16_t raw = posOffset[i];  // must be unsigned
+    EEPROM.write(EE_OFFSET_BASE + (i - 1) * 2, highByte(raw));
+    EEPROM.write(EE_OFFSET_BASE + (i - 1) * 2 + 1, lowByte(raw));
+  }
+
+  if (DEBUG) Serial.println("Calibration settings saved.");
+}
+
 bool loadSensorSettings() {
   int t = readInt(EE_THRESH);
   int d = EEPROM.read(EE_DIGITAL);
   int a = EEPROM.read(EE_ACTIVEHIGH);
 
-  if (t < 100 || t > 900) return false;
+  // Validate
+  if (t < 0 || t > 1023) return false;  // <-- widened range
   if (d != 0 && d != 1) return false;
   if (a != 0 && a != 1) return false;
 
@@ -109,6 +131,66 @@ bool loadSensorSettings() {
 
   return true;
 }
+
+void loadConfigSettings() {
+
+  // --- Load number of filters ---
+  numberOfFilters = EEPROM.read(20);
+
+  // Validate range (3–8)
+  if (numberOfFilters < 3 || numberOfFilters > 8) {
+    numberOfFilters = 5;  // sensible default
+  }
+
+  // --- Initialise arrays to safe defaults ---
+  for (int i = 1; i <= maxNumberOfFilters; i++) {
+    posOffset[i] = 0;
+    filterPos[i] = 0;
+  }
+
+  // --- Compute ideal filter positions ---
+  int stepsPerSlot = stepsPerRevolution / numberOfFilters;
+
+  for (int i = 1; i <= numberOfFilters; i++) {
+    filterPos[i] = (i - 1) * stepsPerSlot + SENSOR_OFFSET;
+  }
+
+  // --- Load offsets dynamically ---
+  for (int i = 1; i <= numberOfFilters; i++) {
+    uint8_t hi = EEPROM.read(EE_OFFSET_BASE + (i - 1) * 2);
+    uint8_t lo = EEPROM.read(EE_OFFSET_BASE + (i - 1) * 2 + 1);
+    int16_t val = word(hi, lo);
+
+    // Detect uninitialised or absurd values
+    if (val == 0x7FFF || val < -1000 || val > 1000) {
+      val = 0;
+    }
+
+
+    posOffset[i] = val;
+  }
+
+  // --- Debug output ---
+  if (DEBUG) {
+    Serial.println("Loaded config settings from EEPROM:");
+    Serial.print("Number of filters: ");
+    Serial.println(numberOfFilters);
+
+    for (int i = 1; i <= numberOfFilters; i++) {
+      Serial.print("Offset[");
+      Serial.print(i);
+      Serial.print("] = ");
+      Serial.println(posOffset[i]);
+
+      Serial.print("Ideal FilterPos[");
+      Serial.print(i);
+      Serial.print("] = ");
+      Serial.println(filterPos[i]);
+    }
+  }
+}
+
+
 
 // =========================================================
 // SENSOR AUTO-DETECT
@@ -270,15 +352,15 @@ void goToLocation(int newPos) {
     Serial.print(newPos);
     Serial.print(" filterPos[newPos] = ");
     Serial.print(filterPos[newPos]);
-    Serial.print(" posOffset[newPos-1] = ");
-    Serial.println(posOffset[newPos - 1]);
+    Serial.print(" posOffset[newPos] = ");
+    Serial.println(posOffset[newPos]);
   }
 
   if (newPos < currPos) {
-    stepper.runToNewPosition(filterPos[newPos] + posOffset[newPos - 1] - backlashOvershoot);
+    stepper.runToNewPosition(filterPos[newPos] + posOffset[newPos] - backlashOvershoot);
   }
 
-  stepper.runToNewPosition(filterPos[newPos] + posOffset[newPos - 1]);
+  stepper.runToNewPosition(filterPos[newPos] + posOffset[newPos]);
   currPos = newPos;
 
   motor_Off();
@@ -342,36 +424,61 @@ void handleSerial(char firstChar, char secondChar) {
           break;
 
         case 2:
-          for (int i = 0; i < numberOfFilters; i++) posOffset[i] = 0;
-          for (int i = 0; i < numberOfFilters; i++) writeInt(50 + i * 2, posOffset[i]);
+          for (int i = 1; i < numberOfFilters; i++) posOffset[i] = 0;
+          saveConfigSettings();
           Error = homeWheel();
           if (!Error) goToLocation(1);
           sendSerial("Calibration Removed");
           break;
 
         case 6:
-          for (int i = 0; i < numberOfFilters; i++) writeInt(50 + i * 2, posOffset[i]);
+          saveConfigSettings();
           break;
       }
       break;
 
     case '(':
       tmpPoss = currPos;
-      posOffset[tmpPoss - 1] += offSetResolution;
-      Error = homeWheel();
-      if (!Error) goToLocation(tmpPoss);
-      writeInt(50 + (tmpPoss - 1) * 2, posOffset[tmpPoss - 1]);
-      sendSerial("P" + String(currPos) + " Offset " + String(posOffset[currPos - 1] / 5));
+
+      // Increase offset
+      posOffset[tmpPoss] += offSetResolution;
+
+      // Clamp to safe range
+      if (posOffset[tmpPoss] > 1000) posOffset[tmpPoss] = 1000;
+      if (posOffset[tmpPoss] < -1000) posOffset[tmpPoss] = -1000;
+
+      // Remove back-lash
+      stepper.runToNewPosition(stepper.currentPosition() - backlashOvershoot);
+      goToLocation(tmpPoss);
+
+      // Save to EEPROM
+      saveConfigSettings();
+
+      // Report in steps
+      sendSerial("P" + String(currPos) + " Offset " + String(posOffset[currPos]));
       break;
 
     case ')':
       tmpPoss = currPos;
-      posOffset[tmpPoss - 1] -= offSetResolution;
-      Error = homeWheel();
-      if (!Error) goToLocation(tmpPoss);
-      writeInt(50 + (tmpPoss - 1) * 2, posOffset[tmpPoss - 1]);
-      sendSerial("P" + String(currPos) + " Offset " + String(posOffset[currPos - 1] / 5));
+
+      // Decrease offset
+      posOffset[tmpPoss] -= offSetResolution;
+
+      // Clamp to safe range
+      if (posOffset[tmpPoss] > 1000) posOffset[tmpPoss] = 1000;
+      if (posOffset[tmpPoss] < -1000) posOffset[tmpPoss] = -1000;
+
+      // Remove back-lash
+      stepper.runToNewPosition(stepper.currentPosition() - backlashOvershoot);
+      goToLocation(tmpPoss);
+
+      // Save to EEPROM
+      saveConfigSettings();
+
+      // Report in steps
+      sendSerial("P" + String(currPos) + " Offset " + String(posOffset[currPos]));
       break;
+
 
     default:
       Serial.println("Command Unknown");
@@ -405,22 +512,11 @@ void setup() {
   stepper.setSpeed(Speed);
   stepper.setAcceleration(setAccel);
 
-  // Compute filter positions
-  filterPos[0] = 0;
-  for (int i = 0; i < numberOfFilters; i++) {
-    filterPos[i + 1] = (i * (stepsPerRevolution / numberOfFilters)) + homingOffsetSteps;
-    posOffset[i] = readInt(50 + i * 2);
-    if (DEBUG) {
-      Serial.print("Offset[");
-      Serial.print(i);
-      Serial.print("] = ");
-      Serial.println(posOffset[i]);
-    }
-  }
+  // Load filter geometry + offsets from EEPROM
+  loadConfigSettings();
 
   // Load or auto-detect sensor settings
   if (!loadSensorSettings()) detectSensorType();
-
 
   // Home and move to filter 1
   Error = homeWheel();
