@@ -1,6 +1,6 @@
-An Arduino Nano controlled 3D printed filterwheel or astronomy.
+## An Arduino Nano controlled 3D printed filterwheel or astronomy.
 
-This project was inspired by and builds on the work of chemistorge who's original repo can be found [here](https://github.com/chemistorge/Arduino-Motorised-Filter-Wheel-Xagyl-compatible-ASCOM-and-INDI-)
+This project was inspired by and builds on the work of chemistorge who's original repo can be found [here](https://github.com/chemistorge/Arduino-Motorised-Filter-Wheel-Xagyl-compatible-ASCOM-and-INDI-).
 
 After printing the parts I struggled to get the original firmware to operate reliably. This project includes a reworking of that original firmware retaining the same Xagyl command set. I improved the home detection and the button de-bounce code. The firmware has only been tested with a unipolar 28BYJ-48 stepper motor and the common ULN2003 driver board.
 
