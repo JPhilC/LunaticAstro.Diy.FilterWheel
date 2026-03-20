@@ -5,7 +5,7 @@
 // CONFIGURATION
 // =========================================================
 
-#define DEBUG 1  // Set to 1 for verbose debug output
+#define DEBUG 0  // Set to 1 for verbose debug output
 
 // Pins
 #define SENSOR A3
@@ -87,6 +87,7 @@ void saveSensorSettings() {
   writeInt(EE_THRESH, analogSensorThreshold);
   EEPROM.write(EE_DIGITAL, sensorIsDigital ? 1 : 0);
   EEPROM.write(EE_ACTIVEHIGH, activeHigh ? 1 : 0);
+  if (DEBUG) Serial.println("Sensor settings saved.");
 }
 
 // Save configuration settings
@@ -197,7 +198,7 @@ void loadConfigSettings() {
 // =========================================================
 
 void detectSensorType() {
-  Serial.println("EEPROM invalid → running auto-detect…");
+  if (DEBUG) Serial.println("Sensor → running auto-detect…");
 
   int v, minVal = 1023, maxVal = 0;
 
@@ -221,12 +222,8 @@ void detectSensorType() {
     if (v > maxVal) maxVal = v;
   }
 
-  if (DEBUG) {
-    Serial.print("min=");
-    Serial.print(minVal);
-    Serial.print(" max=");
-    Serial.println(maxVal);
-  }
+  if (DEBUG) Serial.println("min=" + String(minVal) + " max=" + String(maxVal));
+
 
   // Digital detection
   if (minVal < 50 || maxVal > 970) {
@@ -240,11 +237,12 @@ void detectSensorType() {
     // *** UPDATED THRESHOLD MARGIN ***
     analogSensorThreshold = activeHigh ? (maxVal - 40) : (minVal + 40);
 
-    Serial.println("Sensor is ANALOG");
-    Serial.print("Analog threshold = ");
-    Serial.println(analogSensorThreshold);
-    Serial.print("Polarity: active ");
-    Serial.println(activeHigh ? "HIGH" : "LOW");
+    if (DEBUG) {
+      Serial.println("Sensor is ANALOG");
+      Serial.print("Polarity: active ");
+      Serial.println(activeHigh ? "HIGH" : "LOW");
+      Serial.println("Threshold " + String(analogSensorThreshold));
+    }
   }
 
   // Rewind
@@ -252,7 +250,6 @@ void detectSensorType() {
   stepper.setCurrentPosition(0);
 
   saveSensorSettings();
-  Serial.println("Auto-detect complete. Values saved.");
 }
 
 // =========================================================
@@ -364,126 +361,21 @@ void goToLocation(int newPos) {
   currPos = newPos;
 
   motor_Off();
+  Serial.println("P" + String(currPos));
+}
+
+void unwindBacklash() {
+  stepper.runToNewPosition(stepper.currentPosition() - backlashOvershoot);
 }
 
 // =========================================================
 // SERIAL PROTOCOL (unchanged from original)
 // =========================================================
 
-void serialFlush() {
-  if (Serial.available()) Serial.read();
-}
-
 void sendSerial(String s) {
   Serial.println(s);
 }
 
-void (*resetFunc)(void) = 0;
-
-void handleSerial(char firstChar, char secondChar) {
-  int number = int(secondChar - 48);
-  int tmpPoss;
-
-  switch (toupper(firstChar)) {
-
-    case 'B':
-      tmpPoss = currPos;
-      for (int i = 0; i < number; i++) {
-        tmpPoss--;
-        if (tmpPoss == 0) tmpPoss = numberOfFilters;
-      }
-      goToLocation(tmpPoss);
-      sendSerial("P" + String(currPos));
-      break;
-
-    case 'F':
-      tmpPoss = currPos;
-      for (int i = 0; i < number; i++) {
-        tmpPoss++;
-        if (tmpPoss == numberOfFilters + 1) tmpPoss = 1;
-      }
-      goToLocation(tmpPoss);
-      sendSerial("P" + String(currPos));
-      break;
-
-    case 'G':
-      goToLocation(number);
-      sendSerial("P" + String(currPos));
-      break;
-
-    case 'P':
-      // Return the current position
-      sendSerial("P" + String(currPos));
-      break;
-
-    case 'R':
-      switch (number) {
-        case 0:
-        case 1:
-          resetFunc();
-          break;
-
-        case 2:
-          for (int i = 1; i < numberOfFilters; i++) posOffset[i] = 0;
-          saveConfigSettings();
-          Error = homeWheel();
-          if (!Error) goToLocation(1);
-          sendSerial("Calibration Removed");
-          break;
-
-        case 6:
-          saveConfigSettings();
-          break;
-      }
-      break;
-
-    case '(':
-      tmpPoss = currPos;
-
-      // Increase offset
-      posOffset[tmpPoss] += offSetResolution;
-
-      // Clamp to safe range
-      if (posOffset[tmpPoss] > 1000) posOffset[tmpPoss] = 1000;
-      if (posOffset[tmpPoss] < -1000) posOffset[tmpPoss] = -1000;
-
-      // Remove back-lash
-      stepper.runToNewPosition(stepper.currentPosition() - backlashOvershoot);
-      goToLocation(tmpPoss);
-
-      // Save to EEPROM
-      saveConfigSettings();
-
-      // Report in steps
-      sendSerial("P" + String(currPos) + " Offset " + String(posOffset[currPos]));
-      break;
-
-    case ')':
-      tmpPoss = currPos;
-
-      // Decrease offset
-      posOffset[tmpPoss] -= offSetResolution;
-
-      // Clamp to safe range
-      if (posOffset[tmpPoss] > 1000) posOffset[tmpPoss] = 1000;
-      if (posOffset[tmpPoss] < -1000) posOffset[tmpPoss] = -1000;
-
-      // Remove back-lash
-      stepper.runToNewPosition(stepper.currentPosition() - backlashOvershoot);
-      goToLocation(tmpPoss);
-
-      // Save to EEPROM
-      saveConfigSettings();
-
-      // Report in steps
-      sendSerial("P" + String(currPos) + " Offset " + String(posOffset[currPos]));
-      break;
-
-
-    default:
-      Serial.println("Command Unknown");
-  }
-}
 
 // =========================================================
 // SETUP
@@ -507,6 +399,368 @@ void setup() {
   digitalWrite(hallCom, LOW);
   digitalWrite(hallPower, HIGH);
 
+  initialise();
+}
+
+// =========================================================
+// LOOP
+// =========================================================
+
+void loop() {
+  handleButtons();
+  handleSerialCommands();
+  handleErrors();
+}
+
+void dispatchXagylCommand(const String &cmd) {
+
+  if (cmd.length() == 0) return;
+
+  char c0 = cmd.charAt(0);
+  char c1 = cmd.length() > 1 ? cmd.charAt(1) : 0;
+
+  switch (c0) {
+
+    // ============================================================
+    // GOTO FILTER (G1..G8)
+    // ============================================================
+    case 'G':
+      if (c1 == '0') {
+        // G0 = Save EEPROM
+        saveConfigSettings();
+        sendSerial("EEPROM Saved");
+        return;
+      } else {
+        // G1..G8 = goto filter
+        handleGoto(c1);
+        return;
+      }
+
+
+    // ============================================================
+    // OFFSET QUERY (O1..O8)
+    // ============================================================
+    case 'O':
+      handleOffsetQuery(c1);
+      return;
+
+
+    // ============================================================
+    // OFFSET ADJUSTMENT (Xagyl-style incremental nudges)
+    // ============================================================
+    case ')':  // Increase offset
+      handleOffsetIncrease();
+      return;
+
+    case '(':  // Decrease offset
+      handleOffsetDecrease();
+      return;
+
+
+    // ============================================================
+    // SET ABSOLUTE OFFSET (Fxxxx)
+    // ============================================================
+    case 'F':
+      handleSetAbsoluteOffset(cmd);
+      return;
+
+
+    // ============================================================
+    // INFORMATION COMMANDS (I0..I9)
+    // ============================================================
+    case 'I':
+      handleInfo(c1);
+      return;
+
+
+    // ============================================================
+    // SENSOR TEST COMMANDS (T0..T3)
+    // ============================================================
+    case 'T':
+      handleSensorTest(c1);
+      return;
+
+
+    // ============================================================
+    // RESET / CALIBRATION COMMANDS (R0..R6)
+    // ============================================================
+    case 'R':
+      handleReset(c1);
+      return;
+
+
+    // ============================================================
+    // SPEED SETTING (Sxxx)
+    // ============================================================
+    case 'S':
+      handleSetSpeed(cmd);
+      return;
+
+
+    // ============================================================
+    // THRESHOLD ADJUSTMENT ({0, }0) (NOT IMPLEMENTED IN HARDWARE)
+    // ============================================================
+    case '{':
+    case '}':
+      spoofThreshold();
+      return;
+
+    // ============================================================
+    // JITTER ADJUSTMENT ([0, ]0) (NOT IMPLEMENTED IN HARDWARE)
+    // ============================================================
+    case '[':
+    case ']':
+      spoofJitter();
+      return;
+
+    // ============================================================
+    // PULSE WIDTH (M0 / N0) (NOT IMPLEMENTED IN HARDWARE)
+    // ============================================================
+    case 'M':
+    case 'N':
+      spoofPulse();
+      return;
+
+      break;
+  }
+
+  // Unknown command → ignore silently (Xagyl behaviour)
+}
+
+// ============================
+// COMMAND HANDLERS
+// ============================
+// --- Debounce state ---
+const unsigned long debounceTime = 50;  // 50ms is ideal for mechanical buttons
+
+unsigned long lastUpPress = 0;
+unsigned long lastDownPress = 0;
+
+bool lastUpState = HIGH;
+bool lastDownState = HIGH;
+
+void handleButtons() {
+
+  // UP BUTTON
+  bool upState = digitalRead(upButton);
+  if (upState == LOW && lastUpState == HIGH) {
+    unsigned long now = millis();
+    if (now - lastUpPress > debounceTime) {
+
+      if (currPos < numberOfFilters) {
+        goToLocation(currPos + 1);
+        sendSerial("P" + String(currPos));
+      }
+
+      lastUpPress = now;
+    }
+  }
+  lastUpState = upState;
+
+  // DOWN BUTTON
+  bool downState = digitalRead(downButton);
+  if (downState == LOW && lastDownState == HIGH) {
+    unsigned long now = millis();
+    if (now - lastDownPress > debounceTime) {
+
+      if (currPos > 1) {
+        goToLocation(currPos - 1);
+        sendSerial("P" + String(currPos));
+      }
+
+      lastDownPress = now;
+    }
+  }
+  lastDownState = downState;
+}
+
+void handleSerialCommands() {
+  if (!Serial.available()) return;
+
+  Serial.setTimeout(250);
+  String cmd = Serial.readStringUntil('\n');
+
+  if (cmd.length() == 0) return;
+
+  dispatchXagylCommand(cmd);
+}
+
+void handleErrors() {
+  if (Error) {
+    Serial.println("Homing Failed");
+    Error = false;
+  }
+}
+
+// ============================
+// OFFSET COMMAND HANDLERS
+// ============================
+
+void handleOffsetQuery(char c1) {
+  int f = c1 - '0';
+  if (f < 1 || f > numberOfFilters) return;
+
+  sendSerial("P" + String(f) + " Offset " + String(posOffset[f]));
+}
+
+void handleOffsetIncrease() {
+  int f = currPos;
+  posOffset[f] += offSetResolution;
+  clampOffset(f);
+  saveOffsetToEEPROM(f);
+  unwindAndGoto(f);
+  sendOffsetReport(f);
+}
+
+void handleOffsetDecrease() {
+  int f = currPos;
+  posOffset[f] -= offSetResolution;
+  clampOffset(f);
+  saveOffsetToEEPROM(f);
+  unwindAndGoto(f);
+  sendOffsetReport(f);
+}
+
+void handleSetAbsoluteOffset(const String &cmd) {
+  int f = currPos;
+  int val = cmd.substring(1).toInt();
+
+  posOffset[f] = val;
+
+  writeInt(EE_OFFSET_BASE + (f - 1) * 2, posOffset[f]);
+
+  unwindAndGoto(f);
+
+  sendSerial("P" + String(f) + " Offset " + String(posOffset[f]));
+}
+
+
+void handleGoto(char c1) {
+  int f = c1 - '0';
+  if (f < 1 || f > numberOfFilters) return;
+
+  if (f == 1) {
+    Error = homeWheel();
+  } else {
+    if (!Error) goToLocation(f);
+  }
+
+  sendSerial("P" + String(currPos));
+}
+
+
+void handleInfo(char c1) {
+  switch (c1) {
+    case '0': sendSerial("Nano Filter Wheel"); break;
+    case '1': sendSerial("FW1.0.0"); break;
+    case '2': sendSerial("P" + String(currPos)); break;
+    case '3': sendSerial("DIY"); break;
+    case '4': sendSerial("MaxSpeed " + String(maxSpeed)); break;
+    case '5': sendSerial("<Unused>>"); break;
+    case '6': sendOffsetReport(currPos); break;
+    case '7': sendSerial("Threshold " + String(analogSensorThreshold)); break;
+    case '8': sendSerial("FilterSlots " + String(numberOfFilters)); break;
+    case '9': sendSerial("<Unused>"); break;
+  }
+}
+
+
+void handleSensorTest(char c1) {
+  switch (c1) {
+    case '0':
+    case '1':
+      sendSerial("Sensors " + String(digitalRead(SENSOR)) + " " + String(digitalRead(SENSOR)));
+      break;
+
+    case '2':
+      sendSerial("Digital " + String(sensorIsDigital ? "YES" : "NO"));
+      break;
+
+    case '3':
+      sendSerial("Active High " + String(activeHigh ? "YES" : "NO"));
+      break;
+  }
+}
+
+void handleSetSpeed(const String &cmd) {
+  // Extract the numeric part after 'S'
+  int newSpeed = cmd.substring(1).toInt();
+
+  // Sanity‑check the range (Xagyl uses 0–100%)
+  if (newSpeed < 0) newSpeed = 0;
+  if (newSpeed > 100) newSpeed = 100;
+
+  // Convert percentage to actual stepper speed
+  // Your maxSpeed constant is the 100% value
+  int scaledSpeed = (maxSpeed * newSpeed) / 100;
+
+  // Apply to stepper
+  stepper.setMaxSpeed(scaledSpeed);
+  stepper.setSpeed(scaledSpeed);
+
+  // Report back in Xagyl format
+  sendSerial("MaxSpeed " + String(newSpeed) + "%");
+}
+
+// --------------------------------------------
+// Spoof Xagly ASCOM & INDI driver requirements
+// --------------------------------------------
+void spoofThreshold() {
+  // Report back in Xagyl format
+  sendSerial("Threshold 0");
+}
+
+void spoofJitter() {
+  // Report back in Xagyl format
+  sendSerial("Jitter 0");
+}
+
+void spoofPulse() {
+  // Report back in Xagyl format
+  sendSerial("Pulse Width 0uS");
+}
+
+
+void handleReset(char c1) {
+  switch (c1) {
+    case '1':
+      initialise();
+      break;
+    case '2': resetOffsets(); break;
+    case '3': sendSerial("Jitter 5"); break;
+    case '4': handleSetSpeed("S100"); break;
+    case '5':
+      detectSensorType();
+      initialise();
+      Serial.println("Threshold " + String(analogSensorThreshold));
+      break;
+    case '6': delay(1000); break;
+  }
+}
+
+void resetOffsets() {
+  // Reset all offsets to zero
+  for (int i = 1; i <= numberOfFilters; i++) {
+    posOffset[i] = 0;
+  }
+  saveConfigSettings();
+
+  // Re-home the wheel (Xagyl behaviour)
+  Error = homeWheel();
+
+  // Report completion
+  sendSerial("Calibration Removed");
+}
+
+void handleSave() {
+  saveConfigSettings();
+  sendSerial("EEPROM Saved");
+}
+
+// ============================
+// HELPERS
+// ============================
+void initialise() {
   stepper.setCurrentPosition(0);
   stepper.setMaxSpeed(maxSpeed);
   stepper.setSpeed(Speed);
@@ -523,92 +777,21 @@ void setup() {
   if (!Error) goToLocation(1);
 }
 
-// =========================================================
-// LOOP
-// =========================================================
 
+void clampOffset(int f) {
+  if (posOffset[f] > 2000) posOffset[f] = 2000;
+  if (posOffset[f] < -2000) posOffset[f] = -2000;
+}
 
-// --- Debounce state ---
-const unsigned long debounceTime = 50;  // 50ms is ideal for mechanical buttons
+void saveOffsetToEEPROM(int f) {
+  writeInt(EE_OFFSET_BASE + (f - 1) * 2, posOffset[f]);
+}
 
-unsigned long lastUpPress = 0;
-unsigned long lastDownPress = 0;
+void unwindAndGoto(int f) {
+  unwindBacklash();
+  goToLocation(f);
+}
 
-bool lastUpState = HIGH;
-bool lastDownState = HIGH;
-
-void loop() {
-
-  // ============================
-  // UP BUTTON (edge-triggered)
-  // ============================
-  bool upState = digitalRead(upButton);
-
-  // Detect falling edge (button pressed)
-  if (upState == LOW && lastUpState == HIGH) {
-    unsigned long now = millis();
-    if (now - lastUpPress > debounceTime) {
-
-      if (DEBUG) {
-        Serial.print("UP: currPos = ");
-        Serial.print(currPos);
-        Serial.print(" of ");
-        Serial.println(numberOfFilters);
-      }
-
-      if (currPos < numberOfFilters) {
-        goToLocation(currPos + 1);
-        sendSerial("P" + String(currPos));
-      }
-
-      lastUpPress = now;
-    }
-  }
-
-  lastUpState = upState;
-
-
-
-  // ============================
-  // DOWN BUTTON (edge-triggered)
-  // ============================
-  bool downState = digitalRead(downButton);
-
-  if (downState == LOW && lastDownState == HIGH) {
-    unsigned long now = millis();
-    if (now - lastDownPress > debounceTime) {
-
-      if (DEBUG) {
-        Serial.print("DOWN: currPos = ");
-        Serial.print(currPos);
-        Serial.print(" of ");
-        Serial.println(numberOfFilters);
-      }
-
-      if (currPos > 1) {
-        goToLocation(currPos - 1);
-        sendSerial("P" + String(currPos));
-      }
-
-      lastDownPress = now;
-    }
-  }
-
-  lastDownState = downState;
-
-
-  if (Serial.available() > 0) {
-    delay(10);
-    if (Serial.available() >= 2) {
-      char one = Serial.read();
-      char two = Serial.read();
-      if (!isDigit(one) && isDigit(two)) handleSerial(one, two);
-      else serialFlush();
-    } else serialFlush();
-  }
-
-  if (Error) {
-    Serial.println("Homing Failed");
-    Error = false;
-  }
+void sendOffsetReport(int f) {
+  sendSerial("P" + String(f) + " Offset " + String(posOffset[f]));
 }
