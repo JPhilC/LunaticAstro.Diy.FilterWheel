@@ -9,7 +9,7 @@ Commands fall into two categories:
 
 - **Supported Commands** — These control real hardware behaviour.  
 - **Spoofed Commands** — These return fixed or simulated values for Xagyl driver compatibility.  
-  *(These will be removed or replaced when the custom ASCOM driver is complete.)*
+  *(These may be removed or replaced when the custom ASCOM driver is complete.)*
 
 ---
 
