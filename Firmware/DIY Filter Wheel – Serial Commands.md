@@ -21,9 +21,9 @@ Moves the wheel to filter position *n*.
 Filter **1** triggers a full homing cycle.
 
 **Response:**
-
-
-Pn
+```text
+P<n>
+```
 
 ---
 
@@ -31,9 +31,9 @@ Pn
 Saves all configuration settings (offsets, speed, etc.) to EEPROM.
 
 **Response:**
-
-
+```text
 EEPROM Saved
+```
 
 ---
 
@@ -44,9 +44,9 @@ EEPROM Saved
 Returns the stored offset for filter *n*.
 
 **Response:**
-
-
-Pn Offset X
+```text
+P<n> Offset X
+```
 
 ---
 
@@ -55,9 +55,9 @@ Increases the offset for the current filter by the configured resolution.
 Triggers a re-home and re-position.
 
 **Response:**
-
-
-Pn Offset X
+```text
+P<n> Offset X
+```
 
 ---
 
@@ -66,9 +66,9 @@ Decreases the offset for the current filter.
 Triggers a re-home and re-position.
 
 **Response:**
-
-
-Pn Offset X
+```text
+P<n> Offset X
+```
 
 ---
 
@@ -78,130 +78,226 @@ Sets the offset for the current filter to an explicit value.
 Triggers a re-home and re-position.
 
 **Response:**
-
-
-Pn Offset X
+```text
+P<n> Offset X
+```
 
 ---
 
 # 3. Information Commands (Supported)
 
+These map directly to `handleInfo(char c1)`.
+
 ## **I0 — Product Name**
-Returns the firmware product identifier.
-
-Example:
-
-
-Rayzwheel b.097
+**Response:**
+```text
+Nano Filter Wheel
+```
 
 ---
 
 ## **I1 — Firmware Version**
-Example:
-
-
-FW3.1.5
+**Response:**
+```text
+FW1.0.0
+```
 
 ---
 
 ## **I2 — Current Filter Position**
-
-
-Pn
+**Response:**
+```text
+P<n>
+```
 
 ---
 
 ## **I3 — Serial Number**
-Returns a fixed serial number string.
+**Response:**
+```text
+DIY
+```
 
 ---
 
 ## **I4 — Maximum Speed**
-Returns the configured maximum rotation speed.
+**Response:**
+```text
+MaxSpeed <maxSpeed>
+```
+
+---
+
+## **I5 — Unused**
+**Response:**
+```text
+<Unused>
+```
 
 ---
 
 ## **I6 — Current Filter Offset**
+**Response:**
+```text
+P<n> Offset X
+```
 
+---
 
-Pn Offset X
+## **I7 — Threshold**
+**Response:**
+```text
+Threshold <analogSensorThreshold>
+```
 
 ---
 
 ## **I8 — Number of Filter Slots**
-Returns the number of available filter positions.
+**Response:**
+```text
+FilterSlots <numberOfFilters>
+```
 
 ---
 
-# 4. Reset / Calibration Commands
-
-## **R1 — Re-Home Wheel**
-Performs a full homing cycle.
-
+## **I9 — Unused**
 **Response:**
+```text
+<Unused>
+```
 
+---
 
-P1
+# 4. Sensor Test Commands
+
+These map to `handleSensorTest(char c1)`.
+
+## **T0 / T1 — Sensor Digital State**
+**Response:**
+```text
+Sensors <state> <state>
+```
+
+---
+
+## **T2 — Sensor Type**
+**Response:**
+```text
+Digital YES
+```
+or
+```text
+Digital NO
+```
+
+---
+
+## **T3 — Sensor Polarity**
+**Response:**
+```text
+Active High YES
+```
+or
+```text
+Active High NO
+```
+
+---
+
+# 5. Reset / Calibration Commands
+
+These map to `handleReset(char c1)`.
+
+## **R1 — Re-Initialise**
+Re-initialises the wheel (calls `initialise()`).
 
 ---
 
 ## **R2 — Reset All Offsets**
-Clears all filter offsets, saves configuration, and re-homes.
+Clears all offsets, saves configuration, and re-homes.
 
 **Response:**
-
-
+```text
 Calibration Removed
+```
 
 ---
 
-## **R3, R4, R5, R6 — Spoofed**
-These commands return fixed values for Xagyl compatibility.  
-They do **not** affect hardware.
+## **R3 — Jitter Preset (Spoofed)**
+**Response:**
+```text
+Jitter 5
+```
 
 ---
 
-# 5. Speed Commands
+## **R4 — Reset Speed to 100%**
+**Response:**
+```text
+MaxSpeed 100%
+```
+
+---
+
+## **R5 — Re-Detect Sensor and Re-Initialise**
+**Response:**
+```text
+Threshold <analogSensorThreshold>
+```
+
+---
+
+## **R6 — Delay**
+Performs a 1-second delay.  
+_No response._
+
+---
+
+# 6. Speed Commands
 
 ## **Sxxx — Set Rotation Speed**
 **Syntax:** `S<number>`  
-Sets the wheel rotation speed as a percentage of maximum.
+Sets speed as a percentage of maximum.
 
 **Response:**
-
-
-MaxSpeed X%
+```text
+MaxSpeed <percent>%
+```
 
 ---
 
-# 6. Spoofed Commands (Xagyl Compatibility Only)
+# 7. Spoofed Commands (Xagyl Compatibility Only)
 
-These commands do **not** affect hardware.  
-They return fixed values to satisfy the expectations of the Xagyl ASCOM driver.
+These do **not** affect hardware.
 
 ## **{0 / }0 — Threshold Adjustment (Spoofed)**
-Returns a fixed threshold value.
+**Response:**
+```text
+Threshold 0
+```
 
 ---
 
 ## **[0 / ]0 — Jitter Adjustment (Spoofed)**
-Returns a fixed jitter value.
+**Response:**
+```text
+Jitter 0
+```
 
 ---
 
 ## **M0 / N0 — Pulse Width Adjustment (Spoofed)**
-Returns a fixed pulse width.
+**Response:**
+```text
+Pulse Width 0uS
+```
 
 ---
 
 ## **T0 .. T3 — Sensor Test (Spoofed)**
-Returns simulated sensor values.
+Returns simulated values.
 
 ---
 
-# 7. Unknown Commands
-Any unrecognised command is silently ignored, matching Xagyl behaviour.
-
-
-
-
+# 8. Unknown Commands
+Unknown commands are silently ignored.
