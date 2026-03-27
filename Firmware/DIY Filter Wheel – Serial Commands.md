@@ -50,28 +50,6 @@ P<n> Offset X
 
 ---
 
-## **) — Increment Offset**
-Increases the offset for the current filter by the configured resolution.  
-Triggers a re-home and re-position.
-
-**Response:**
-```text
-P<n> Offset X
-```
-
----
-
-## **( — Decrement Offset**
-Decreases the offset for the current filter.  
-Triggers a re-home and re-position.
-
-**Response:**
-```text
-P<n> Offset X
-```
-
----
-
 ## **Fxxxx — Set Absolute Offset**
 **Syntax:** `F<number>`  
 Sets the offset for the current filter to an explicit value.  
@@ -128,15 +106,7 @@ MaxSpeed <maxSpeed>
 
 ---
 
-## **I5 — Unused**
-**Response:**
-```text
-<Unused>
-```
-
----
-
-## **I6 — Current Filter Offset**
+## **I5 — Current Filter Offset**
 **Response:**
 ```text
 P<n> Offset X
@@ -144,7 +114,7 @@ P<n> Offset X
 
 ---
 
-## **I7 — Threshold**
+## **I6 — Threshold**
 **Response:**
 ```text
 Threshold <analogSensorThreshold>
@@ -152,18 +122,10 @@ Threshold <analogSensorThreshold>
 
 ---
 
-## **I8 — Number of Filter Slots**
+## **I7 — Number of Filter Slots**
 **Response:**
 ```text
 FilterSlots <numberOfFilters>
-```
-
----
-
-## **I9 — Unused**
-**Response:**
-```text
-<Unused>
 ```
 
 ---
@@ -223,15 +185,7 @@ Calibration Removed
 
 ---
 
-## **R3 — Jitter Preset (Spoofed)**
-**Response:**
-```text
-Jitter 5
-```
-
----
-
-## **R4 — Reset Speed to 100%**
+## **R3 — Reset Speed to 100%**
 **Response:**
 ```text
 MaxSpeed 100%
@@ -239,17 +193,11 @@ MaxSpeed 100%
 
 ---
 
-## **R5 — Re-Detect Sensor and Re-Initialise**
+## **R4 — Re-Detect Sensor and Re-Initialise**
 **Response:**
 ```text
 Threshold <analogSensorThreshold>
 ```
-
----
-
-## **R6 — Delay**
-Performs a 1-second delay.  
-_No response._
 
 ---
 
@@ -266,36 +214,8 @@ MaxSpeed <percent>%
 
 ---
 
-# 7. Spoofed Commands (Xagyl Compatibility Only)
-
-These do **not** affect hardware.
-
-## **{0 / }0 — Threshold Adjustment (Spoofed)**
-**Response:**
-```text
-Threshold 0
-```
-
----
-
-## **[0 / ]0 — Jitter Adjustment (Spoofed)**
-**Response:**
-```text
-Jitter 0
-```
-
----
-
-## **M0 / N0 — Pulse Width Adjustment (Spoofed)**
-**Response:**
-```text
-Pulse Width 0uS
-```
-
----
-
-## **T0 .. T3 — Sensor Test (Spoofed)**
-Returns simulated values.
+## **T0 .. T3 — Sensor Test **
+Returns values.
 
 ---
 
