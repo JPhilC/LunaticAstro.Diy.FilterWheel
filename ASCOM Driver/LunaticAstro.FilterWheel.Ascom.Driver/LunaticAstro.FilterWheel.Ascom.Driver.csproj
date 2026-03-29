@@ -58,31 +58,37 @@
 
 	<ItemGroup>
 	  <Reference Include="ASCOM.Astrometry">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Astrometry.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Astrometry.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.Attributes">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Attributes.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Attributes.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.Cache">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Cache.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Cache.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.Controls">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Controls.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Controls.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.DeviceInterfaces">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.DeviceInterfaces.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.DeviceInterfaces.dll</HintPath>
+	  </Reference>
+	  <Reference Include="ASCOM.DriverAccess">
+	    <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.DriverAccess.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.Exceptions">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Exceptions.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Exceptions.dll</HintPath>
+	  </Reference>
+	  <Reference Include="ASCOM.Internal.Extensions">
+	    <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Internal.Extensions.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.SettingsProvider">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.SettingsProvider.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.SettingsProvider.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.Utilities">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Utilities.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Utilities.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ASCOM.Utilities.Video">
-	    <HintPath>..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Utilities.Video.dll</HintPath>
+	    <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ASCOM\Developer\Components\Platform\ASCOM.Utilities.Video.dll</HintPath>
 	  </Reference>
 	  <Reference Include="System.Windows.Forms" />
 	  <Reference Include="WindowsFormsIntegration" />
