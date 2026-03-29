@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="LunaticAstro.FilterWheel.Ascom.Driver/LunaticAstro.FilterWheel.Ascom.Driver.csproj" Id="68ce03ed-fc7e-4b09-b9a3-1b0f2e607d5e">
+    <Platform Solution="Debug|x86" Project="x86" />
+  </Project>
+</Solution>

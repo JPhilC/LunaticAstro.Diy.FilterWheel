@@ -29,7 +29,8 @@
 #define stepsPerRevolution 2048
 
 // Filter wheel settings
-#define maxNumberOfFilters 8
+#define MAX_FILTERS 8
+#define NAME_SLOT_SIZE 31
 
 #define offSetResolution 5
 #define backlashOvershoot 200
@@ -52,8 +53,8 @@ AccelStepper stepper(4, IN2, IN4, IN1, IN3);
 #endif
 
 int numberOfFilters = 5;
-int filterPos[maxNumberOfFilters + 1];
-int16_t posOffset[maxNumberOfFilters + 1];
+int filterPos[MAX_FILTERS + 1];
+int16_t posOffset[MAX_FILTERS + 1];
 
 bool Error = false;
 int currPos = 0;
@@ -62,7 +63,8 @@ int currPos = 0;
 bool sensorIsDigital = false;
 bool activeHigh = true;
 int analogSensorThreshold = 650;
-
+char filterNames[MAX_FILTERS + 1][NAME_SLOT_SIZE];
+const char DEFAULT_FILTER_NAME[] = "<empty>";
 
 // =========================================================
 // EEPROM HELPERS
@@ -73,6 +75,8 @@ int analogSensorThreshold = 650;
 #define EE_DIGITAL 12
 #define EE_ACTIVEHIGH 13
 #define EE_OFFSET_BASE 52
+#define EE_NAME_BASE (EE_OFFSET_BASE + (MAX_FILTERS * 2))  // 52 + 16 = 68
+
 
 void writeInt(int addr, int value) {
   EEPROM.write(addr, value >> 8);
@@ -82,6 +86,31 @@ void writeInt(int addr, int value) {
 int readInt(int addr) {
   return (EEPROM.read(addr) << 8) | EEPROM.read(addr + 1);
 }
+
+void writeStringFixed(int addr, const char *str, int maxLen) {
+  for (int i = 0; i < maxLen; i++) {
+    char c = str[i];
+    if (c == '\0') {
+      EEPROM.write(addr + i, 0);
+      // Fill the rest with 0
+      for (int j = i + 1; j < maxLen; j++)
+        EEPROM.write(addr + j, 0);
+      return;
+    }
+    EEPROM.write(addr + i, c);
+  }
+}
+
+void readStringFixed(int addr, char *buffer, int maxLen) {
+  for (int i = 0; i < maxLen; i++) {
+    buffer[i] = EEPROM.read(addr + i);
+    if (buffer[i] == 0) {
+      return;
+    }
+  }
+  buffer[maxLen - 1] = 0;  // ensure null termination
+}
+
 
 void saveSensorSettings() {
   writeInt(EE_THRESH, analogSensorThreshold);
@@ -101,6 +130,12 @@ void saveConfigSettings() {
     int16_t raw = posOffset[i];  // must be unsigned
     EEPROM.write(EE_OFFSET_BASE + (i - 1) * 2, highByte(raw));
     EEPROM.write(EE_OFFSET_BASE + (i - 1) * 2 + 1, lowByte(raw));
+  }
+
+  // --- Save filter names ---
+  for (int i = 1; i <= numberOfFilters; i++) {
+    int addr = EE_NAME_BASE + (i - 1) * NAME_SLOT_SIZE;
+    writeStringFixed(addr, filterNames[i], NAME_SLOT_SIZE);
   }
 
   if (DEBUG) Serial.println("Calibration settings saved.");
@@ -144,7 +179,7 @@ void loadConfigSettings() {
   }
 
   // --- Initialise arrays to safe defaults ---
-  for (int i = 1; i <= maxNumberOfFilters; i++) {
+  for (int i = 1; i <= MAX_FILTERS; i++) {
     posOffset[i] = 0;
     filterPos[i] = 0;
   }
@@ -171,6 +206,22 @@ void loadConfigSettings() {
     posOffset[i] = val;
   }
 
+  // --- Load filter names ---
+  for (int i = 1; i <= numberOfFilters; i++) {
+    int addr = EE_NAME_BASE + (i - 1) * NAME_SLOT_SIZE;
+    readStringFixed(addr, filterNames[i], NAME_SLOT_SIZE);
+
+    // Detect uninitialised or blank names
+    if (filterNames[i][0] == 0xFF || filterNames[i][0] == 0) {
+      // Set default
+      strncpy(filterNames[i], DEFAULT_FILTER_NAME, NAME_SLOT_SIZE - 1);
+      filterNames[i][NAME_SLOT_SIZE - 1] = 0;
+
+      // Write back to EEPROM so it's persistent
+      writeStringFixed(addr, filterNames[i], NAME_SLOT_SIZE);
+    }
+  }
+
   // --- Debug output ---
   if (DEBUG) {
     Serial.println("Loaded config settings from EEPROM:");
@@ -187,6 +238,13 @@ void loadConfigSettings() {
       Serial.print(i);
       Serial.print("] = ");
       Serial.println(filterPos[i]);
+    }
+
+    for (int i = 1; i <= numberOfFilters; i++) {
+      Serial.print("Name[");
+      Serial.print(i);
+      Serial.print("] = ");
+      Serial.println(filterNames[i]);
     }
   }
 }
@@ -342,7 +400,7 @@ bool homeWheel() {
 // MOVEMENT
 // =========================================================
 
-void goToLocation(int newPos) {
+void goToLocation(int newPos, bool silent) {
   if (newPos < 1 || newPos > numberOfFilters) return;
   if (DEBUG) {
     Serial.print("GoTo ");
@@ -361,7 +419,9 @@ void goToLocation(int newPos) {
   currPos = newPos;
 
   motor_Off();
-  Serial.println("P" + String(currPos));
+  if (!silent) {
+    Serial.println("P" + String(currPos));
+  }
 }
 
 void unwindBacklash() {
@@ -382,7 +442,7 @@ void sendSerial(String s) {
 // =========================================================
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   pinMode(hallCom, OUTPUT);
   pinMode(hallPower, OUTPUT);
@@ -398,7 +458,7 @@ void setup() {
 
   digitalWrite(hallCom, LOW);
   digitalWrite(hallPower, HIGH);
-
+  sendSerial("CONNECTED");
   initialise();
 }
 
@@ -446,22 +506,27 @@ void dispatchXagylCommand(const String &cmd) {
 
 
     // ============================================================
-    // OFFSET ADJUSTMENT (Xagyl-style incremental nudges)
-    // ============================================================
-    case ')':  // Increase offset
-      handleOffsetIncrease();
-      return;
-
-    case '(':  // Decrease offset
-      handleOffsetDecrease();
-      return;
-
-
-    // ============================================================
-    // SET ABSOLUTE OFFSET (Fxxxx)
+    // SET ABSOLUTE OFFSET (F<n> <xxxx>)
     // ============================================================
     case 'F':
       handleSetAbsoluteOffset(cmd);
+      return;
+
+
+
+    // ============================================================
+    // NAME QUERY (Q1..Q8)
+    // ============================================================
+    case 'Q':
+      handleNameQuery(cmd);
+      return;
+
+
+    // ============================================================
+    // SET FILTER NAME (N<n> <cccccccccccccccccccccccccccccc>)
+    // ============================================================
+    case 'N':
+      handleSetName(cmd);
       return;
 
 
@@ -496,31 +561,6 @@ void dispatchXagylCommand(const String &cmd) {
       handleSetSpeed(cmd);
       return;
 
-
-    // ============================================================
-    // THRESHOLD ADJUSTMENT ({0, }0) (NOT IMPLEMENTED IN HARDWARE)
-    // ============================================================
-    case '{':
-    case '}':
-      spoofThreshold();
-      return;
-
-    // ============================================================
-    // JITTER ADJUSTMENT ([0, ]0) (NOT IMPLEMENTED IN HARDWARE)
-    // ============================================================
-    case '[':
-    case ']':
-      spoofJitter();
-      return;
-
-    // ============================================================
-    // PULSE WIDTH (M0 / N0) (NOT IMPLEMENTED IN HARDWARE)
-    // ============================================================
-    case 'M':
-    case 'N':
-      spoofPulse();
-      return;
-
       break;
   }
 
@@ -548,7 +588,7 @@ void handleButtons() {
     if (now - lastUpPress > debounceTime) {
 
       if (currPos < numberOfFilters) {
-        goToLocation(currPos + 1);
+        goToLocation(currPos + 1, false);
         sendSerial("P" + String(currPos));
       }
 
@@ -564,7 +604,7 @@ void handleButtons() {
     if (now - lastDownPress > debounceTime) {
 
       if (currPos > 1) {
-        goToLocation(currPos - 1);
+        goToLocation(currPos - 1, false);
         sendSerial("P" + String(currPos));
       }
 
@@ -603,64 +643,126 @@ void handleOffsetQuery(char c1) {
   sendSerial("P" + String(f) + " Offset " + String(posOffset[f]));
 }
 
-void handleOffsetIncrease() {
-  int f = currPos;
-  posOffset[f] += offSetResolution;
-  clampOffset(f);
-  saveOffsetToEEPROM(f);
-  unwindAndGoto(f);
-  sendOffsetReport(f);
-}
-
-void handleOffsetDecrease() {
-  int f = currPos;
-  posOffset[f] -= offSetResolution;
-  clampOffset(f);
-  saveOffsetToEEPROM(f);
-  unwindAndGoto(f);
-  sendOffsetReport(f);
-}
-
 void handleSetAbsoluteOffset(const String &cmd) {
-  int f = currPos;
-  int val = cmd.substring(1).toInt();
+  // Expected format: "F<n> <offset>"
+  // Example: "F3 120"
 
+  // 1. Find the space separating filter number and offset
+  int spaceIndex = cmd.indexOf(' ');
+  if (spaceIndex < 0) {
+    sendSerial("ERR Invalid Format");
+    return;
+  }
+
+  // 2. Extract filter number
+  int f = cmd.substring(1, spaceIndex).toInt();  // characters after 'F' up to space
+
+  if (f < 1 || f > numberOfFilters) {
+    sendSerial("ERR Invalid Filter");
+    return;
+  }
+
+  // 3. Extract offset value
+  int val = cmd.substring(spaceIndex + 1).toInt();
+
+  // 4. Store offset
   posOffset[f] = val;
-
   writeInt(EE_OFFSET_BASE + (f - 1) * 2, posOffset[f]);
 
+  // 5. Move wheel to new absolute position
   unwindAndGoto(f);
 
+  // 6. Emit confirmation
   sendSerial("P" + String(f) + " Offset " + String(posOffset[f]));
 }
 
+
+void handleSetName(const String &cmd) {
+  // cmd is the full command string, e.g. "L3 Red Filter"
+  // First extract the slot number after 'L'
+
+  int spaceIndex = cmd.indexOf(' ');
+  if (spaceIndex == -1) {
+    Serial.println("ERR Missing name");
+    return;
+  }
+
+
+  // Extract slot number
+  int slot = cmd.substring(1, spaceIndex).toInt();
+
+  if (slot < 1 || slot > numberOfFilters) {
+    Serial.println("ERR Slot out of range");
+    return;
+  }
+
+  // Extract the name (everything after the first space)
+  String newName = cmd.substring(spaceIndex + 1);
+
+  // Trim whitespace
+  newName.trim();
+
+  // Enforce max length (30 chars)
+  if (newName.length() > 30) {
+    newName = newName.substring(0, 30);
+  }
+
+  // Copy into global array
+  newName.toCharArray(filterNames[slot], NAME_SLOT_SIZE);
+
+  // Save to EEPROM
+  int addr = EE_NAME_BASE + (slot - 1) * NAME_SLOT_SIZE;
+  writeStringFixed(addr, filterNames[slot], NAME_SLOT_SIZE);
+
+  // Respond in protocol format
+  Serial.print("P");
+  Serial.print(slot);
+  Serial.print(" Name ");
+  Serial.println(filterNames[slot]);
+}
+
+void handleNameQuery(const String &cmd) {
+  // cmd is the full command, e.g. "N3"
+  // Extract the slot number after 'N'
+
+  if (cmd.length() < 2) {
+    Serial.println("ERR Missing slot");
+    return;
+  }
+
+  int slot = cmd.substring(1).toInt();
+
+  if (slot < 1 || slot > numberOfFilters) {
+    Serial.println("ERR Slot out of range");
+    return;
+  }
+
+  // Respond in protocol format:
+  // P<n> Name <name>
+  Serial.print("P");
+  Serial.print(slot);
+  Serial.print(" Name ");
+  Serial.println(filterNames[slot]);
+}
 
 void handleGoto(char c1) {
   int f = c1 - '0';
   if (f < 1 || f > numberOfFilters) return;
 
-  if (f == 1) {
-    Error = homeWheel();
-  } else {
-    if (!Error) goToLocation(f);
-  }
-
-  sendSerial("P" + String(currPos));
+  goToLocation(f, false);
 }
 
 
 void handleInfo(char c1) {
   switch (c1) {
-    case '0': sendSerial("Nano Filter Wheel"); break;
-    case '1': sendSerial("FW1.0.0"); break;
-    case '2': sendSerial("P" + String(currPos)); break;
-    case '3': sendSerial("DIY"); break;
-    case '4': sendSerial("MaxSpeed " + String(maxSpeed)); break;
-    case '5': sendSerial("<Unused>>"); break;
-    case '6': sendOffsetReport(currPos); break;
-    case '7': sendSerial("Threshold " + String(analogSensorThreshold)); break;
-    case '8': sendSerial("FilterSlots " + String(numberOfFilters)); break;
-    case '9': sendSerial("<Unused>"); break;
+    case '0': sendSerial("Nano Filter Wheel"); break;             // Product Name
+    case '1': sendSerial("FW1.0.0"); break;                       // Firmware version
+    case '2': sendSerial("P" + String(currPos)); break;           // Current filter position
+    case '3': sendSerial("DIY"); break;                           // Serial number
+    case '4': sendSerial("MaxSpeed " + String(maxSpeed)); break;  // Max speed
+    case '5': sendOffsetReport(currPos); break;
+    case '6': sendSerial("Threshold " + String(analogSensorThreshold)); break;
+    case '7': sendSerial("FilterSlots " + String(numberOfFilters)); break;
   }
 }
 
@@ -702,24 +804,6 @@ void handleSetSpeed(const String &cmd) {
   sendSerial("MaxSpeed " + String(newSpeed) + "%");
 }
 
-// --------------------------------------------
-// Spoof Xagly ASCOM & INDI driver requirements
-// --------------------------------------------
-void spoofThreshold() {
-  // Report back in Xagyl format
-  sendSerial("Threshold 0");
-}
-
-void spoofJitter() {
-  // Report back in Xagyl format
-  sendSerial("Jitter 0");
-}
-
-void spoofPulse() {
-  // Report back in Xagyl format
-  sendSerial("Pulse Width 0uS");
-}
-
 
 void handleReset(char c1) {
   switch (c1) {
@@ -727,14 +811,12 @@ void handleReset(char c1) {
       initialise();
       break;
     case '2': resetOffsets(); break;
-    case '3': sendSerial("Jitter 5"); break;
-    case '4': handleSetSpeed("S100"); break;
-    case '5':
+    case '3': handleSetSpeed("S100"); break;
+    case '4':
       detectSensorType();
       initialise();
       Serial.println("Threshold " + String(analogSensorThreshold));
       break;
-    case '6': delay(1000); break;
   }
 }
 
@@ -774,7 +856,10 @@ void initialise() {
 
   // Home and move to filter 1
   Error = homeWheel();
-  if (!Error) goToLocation(1);
+  if (!Error) {
+    goToLocation(1, true);
+    sendSerial("READY");
+  }
 }
 
 
@@ -789,7 +874,7 @@ void saveOffsetToEEPROM(int f) {
 
 void unwindAndGoto(int f) {
   unwindBacklash();
-  goToLocation(f);
+  goToLocation(f, false);
 }
 
 void sendOffsetReport(int f) {

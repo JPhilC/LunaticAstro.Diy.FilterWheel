@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LunaticAstro.FilterWheel.Ascom.Driver": {
+      "commandName": "Project",
+      "commandLineArgs": "/unregister\r\n"
+    }
+  }
+}
