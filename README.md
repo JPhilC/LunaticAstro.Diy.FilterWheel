@@ -1,4 +1,4 @@
-## An Arduino Nano controlled 3D printed filterwheel or astronomy.
+## An Arduino Nano controlled 3D printed filterwheel for astronomy.
 
 This project was inspired by and builds on the work of chemistorge who's original repo can be found [here](https://github.com/chemistorge/Arduino-Motorised-Filter-Wheel-Xagyl-compatible-ASCOM-and-INDI-).
 
