@@ -4,11 +4,13 @@ This project was inspired by and builds on the work of chemistorge who's origina
 
 After printing the parts I struggled to get the original firmware to operate reliably. This project includes a reworking of that original firmware retaining the same Xagyl command set. I improved the home detection and the button de-bounce code. The firmware has only been tested with a unipolar 28BYJ-48 stepper motor and the common ULN2003 driver board.
 
-After getting the firmware working I went looking for the Xagyl ASCOM driver only to find that it is nolonger available. The suggestions I found for alternatives didn't seem to work so I created my own ASCOM driver. This is in a separate repo [here](https://github.com/JPhilC/LunaticAstro.FilterWheel.Ascom.Driver).
+After getting the firmware working I went looking for the Xagyl ASCOM driver only to find that it is nolonger available. The suggestions I found for alternatives didn't seem to work either so I decided to roll my own and create an ASCOM driver to drive it. Both are included in this repo.
+
+The ASCOM drive passes ASCOMs Universal Conform tool and a log of the results is included in the ASCOM driver folder.
 
 ## Disclaimer
 
-The firmware in this project is provided “as is”, without warranty of any kind, express or implied.
+The firmware and software in this project is provided “as is”, without warranty of any kind, express or implied.
 The author shall not be held liable for any damages, loss of data, hardware damage,
 or any other issues arising from the use of this software. Use at your own risk.
 
