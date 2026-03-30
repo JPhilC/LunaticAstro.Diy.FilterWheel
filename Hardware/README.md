@@ -2,14 +2,14 @@ The hardware for this project is the same as [Arduino-Motorised-Filter-Wheel-Xag
 
 Rather than simply copy the details here, please refer to this project if you want the original print files and also for details of the electrical components. 
 
-##Important
+## Important
 
 The firmware in this project expects the following Arduino Nano pin outs:
-###Analogue
+### Analogue pins
 - A1 - Hall sensor (common -)
 - A2 - Hall sensor (power (centre pin on sensor))
 - A3 - Hall sensor (sensor S)
-###Digital
+### Digital pins
 - 3 LED
 - 4 Up button
 - 5 Down button
