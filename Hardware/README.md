@@ -21,4 +21,7 @@ The firmware in this project expects the following Arduino Nano pin outs:
 ## The Hall Sensor
 The firmware has only been tested with a KY-003 analogue hall sensor. This is the one I used. This is the one I used [KY-003 Hall Effect Magnetic Sensor Module For Arduino](https://www.ebay.co.uk/itm/303361490827)
 
+## Wiring internals
+The image below shows the wiring and electronics prior to an LED being added.
+
 ![Wiring internals](FilterWheelElectronics.jpg)
