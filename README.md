@@ -2,9 +2,8 @@
 
 This project was inspired by, and builds, on the work of chemistorge who's original repo can be found [here](https://github.com/chemistorge/Arduino-Motorised-Filter-Wheel-Xagyl-compatible-ASCOM-and-INDI-).
 
-<img src="20260330_095611.JPG" alt="Picture of front of filter wheel" width="300"/>
-<img src="20260330_095631.JPG" alt="Picture of front of filter wheel" width="300"/>
-
+| ![Picture of front of filter wheel](20260330_095611.JPG) | ![Picture of back of filter wheel](0260330_095631.JPG) |
+|----------------------------------------------------------|--------------------------------------------------------|
 
 After printing the parts I struggled to get the original firmware to operate reliably so I wrote new firmware, roughly based on the original but with improved home detection and button de-bounce code. I also changed the command set to make it more compatible with a new ASCOM driver that is also included in this project meaning that **the new firmware is not compatible with the old Xagly ASCOM driver**.
 
