@@ -5,131 +5,165 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
 
-    <TabControl Height="260" Width="480"
+    <Grid>
+        <TabControl Height="260" Width="480"
                 SelectedIndex="{Binding SelectedTabIndex}">
-        <TabItem Header="Setup">
-            <Grid Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <TabItem Header="Setup">
+                <Grid Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <!-- Top description -->
-                    <TextBlock
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Top description -->
+                        <TextBlock
                                TextWrapping="Wrap"
                                HorizontalAlignment="Left"
                                FontSize="14"><Run Text="Choose the "/><Run Language="en-gb" Text="COM port"/><Run Text=" that your filter wheel is connected to below. Use the Filter Settings tab to set names and offsets."/></TextBlock>
 
-                    <!-- ASCOM logo -->
-                    <Image Grid.Column="2"
+                        <!-- ASCOM logo -->
+                        <Image Grid.Column="2"
                            HorizontalAlignment="Right"
                            Width="48"
                            Height="56"
                            Cursor="Hand"
                            Margin="0,0,0,10"
-                           Source="pack://application:,,,/Resources/ASCOM.png"
+                           Source="pack://application:,,,/ASCOM.LunaticAstro.Diy.FilterWheel;component/Resources/ASCOM.png"
                            MouseLeftButtonUp="BrowseToAscom"/>
-                </Grid>
-                <!-- COM Port -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock Text="Comm Port" VerticalAlignment="Center" Width="80"/>
-                    <ComboBox Width="180"
+                    </Grid>
+                    <!-- COM Port -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="Comm Port" VerticalAlignment="Center" Width="80"/>
+                        <ComboBox Width="180"
                       Margin="10,0,0,0"
                       ItemsSource="{Binding ComPorts}"
                       SelectedItem="{Binding SelectedComPort}" />
-                </StackPanel>
+                    </StackPanel>
 
-                <!-- Trace checkbox -->
-                <CheckBox Grid.Row="2"
+                    <!-- Trace checkbox -->
+                    <CheckBox Grid.Row="2"
                   Content="Trace on"
                   Margin="90,10,0,0"
                   IsChecked="{Binding TraceEnabled}" />
 
-                <!-- Buttons -->
-                <StackPanel Grid.Row="4"
+                    <!-- Buttons -->
+                    <StackPanel Grid.Row="4"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Margin="0,20,0,0">
-                    <Button Width="80"
+                        <Button Width="80"
                         Height="28"
                         Margin="0,0,10,0"
                         Content="OK"
                         Command="{Binding OkCommand}" />
 
-                    <Button Width="80"
+                        <Button Width="80"
                         Height="28"
                         Content="Cancel"
                         Command="{Binding CancelCommand}" />
-                </StackPanel>
+                    </StackPanel>
 
-            </Grid>
-        </TabItem>
-        <TabItem Header="Filter Settings">
-            <Grid Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <DataGrid Grid.Row="0" 
+                </Grid>
+            </TabItem>
+            <TabItem Header="Filter Settings">
+                <Grid Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid Grid.Row="0" 
                         ItemsSource="{Binding Filters}"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False" Height="162" VerticalAlignment="Top">
 
-                    <DataGrid.Columns>
+                        <DataGrid.Columns>
 
-                        <DataGridTextColumn Header="#" Binding="{Binding Index}" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="#" Binding="{Binding Index}" IsReadOnly="True"/>
 
-                        <DataGridTextColumn Header="Name" Width="200"
+                            <DataGridTextColumn Header="Name" Width="200"
                             Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <DataGridTextColumn Header="Focus Offset"
+                            <DataGridTextColumn Header="Focus Offset"
                             Binding="{Binding FocusOffset, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <DataGridTextColumn Header="Position Offset"
+                            <DataGridTextColumn Header="Position Offset"
                             Binding="{Binding PositionOffset, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <DataGridTemplateColumn Header="Adjust">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <UniformGrid Rows="1" Columns="2" Margin="4,0,0,0">
-                                        <Button Content="-" Command="{Binding DecrementOffsetCommand}" />
-                                        <Button Content="+" Command="{Binding IncrementOffsetCommand}" />
-                                    </UniformGrid>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Adjust">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <UniformGrid Rows="1" Columns="2" Margin="4,0,0,0">
+                                            <Button Content="-" Command="{Binding DecrementOffsetCommand}" />
+                                            <Button Content="+" Command="{Binding IncrementOffsetCommand}" />
+                                        </UniformGrid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                    </DataGrid.Columns>
-                </DataGrid>
-                <StackPanel Grid.Row="1"
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Margin="0,20,0,0">
-                    <Button Width="80"
+                        <Button Width="80"
                         Height="28"
                         Margin="0,0,10,0"
                         Content="Save"
                         Command="{Binding SaveFilterSettingsCommand}" />
-                    <Button Width="80"
+                        <Button Width="80"
                         Height="28"
                         Margin="0,0,10,0"
                         Content="Cancel"
                         Command="{Binding CancelFilterSettingsCommand}" />
 
-                </StackPanel>
+                    </StackPanel>
 
-            </Grid>
-        </TabItem>
-    </TabControl>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <Grid Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+              IsHitTestVisible="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.Background>
+                <SolidColorBrush Color="#40000000"/>
+                <!-- semi-transparent dark overlay -->
+            </Grid.Background>
+
+            <Image x:Name="Spinner" Grid.Row="1"
+                Source="pack://application:,,,/ASCOM.LunaticAstro.Diy.FilterWheel;component/Resources/FilterWheel.png
+"              Width="64"
+               Height="64"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center">
+                <Image.RenderTransform>
+                    <RotateTransform Angle="0" CenterX="32" CenterY="32"/>
+                </Image.RenderTransform>
+            </Image>
+            <TextBlock Grid.Row="2" Text="{Binding BusyMessage}" 
+                   HorizontalAlignment="Center" 
+                   Margin="0,10,0,10"
+                   FontSize="14"
+                   Foreground="White"/>
+        </Grid>
+    </Grid>
 </UserControl>

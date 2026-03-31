@@ -379,11 +379,11 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
 
             var sw = Stopwatch.StartNew();
 
-            while (!_initialised && sw.ElapsedMilliseconds < 5000)
+            while (!_initialised && sw.ElapsedMilliseconds < 15000)
                 Thread.Sleep(50);
 
             if (!_initialised)
-                throw new ASCOM.DriverException("Filter wheel failed to initialise within 5 seconds.");
+                throw new ASCOM.DriverException("Filter wheel failed to initialise within 15 seconds.");
         }
 
 
@@ -725,15 +725,15 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
 
         public static async Task<string[]> GetFilterNamesAsync()
         {
-            EnsureConnected();
-
+            EnsureInitialised();
+            LogMessage("GetFilterNamesAsync", $"Getting filter names... Slot count: {_slotCount}");
             int count = _slotCount; // already known from firmware
             return await _service.GetNamesAsync(count);
         }
 
         public static async Task<int[]> GetOffsetsAsync()
         {
-            EnsureConnected();
+            EnsureInitialised();
 
             int count = _slotCount;
             return await _service.GetOffsetsAsync(count);
@@ -741,7 +741,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
 
         public static async Task SetFilterNamesAsync(string[] names)
         {
-            EnsureConnected();
+            EnsureInitialised();
 
             for (int i = 0; i < names.Length; i++)
             {
@@ -752,7 +752,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
 
         public static async Task SetOffsetsAsync(int[] offsets)
         {
-            EnsureConnected();
+            EnsureInitialised();
 
             for (int i = 0; i < offsets.Length; i++)
             {

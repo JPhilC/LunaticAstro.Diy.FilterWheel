@@ -1,9 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
@@ -31,6 +33,9 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
 
         [ObservableProperty]
         private bool isBusy;
+
+        [ObservableProperty]
+        private string busyMessage;
 
         public SetupViewModel(Guid uniqueId)
         {
@@ -120,16 +125,21 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
         {
             try
             {
-                isBusy = true;
+                BusyMessage = "Connecting to filter wheel and loading settings...";
+                IsBusy = true;
                 await FilterWheelHardware.ConnectAsync(_uniqueId);
-
+                BusyMessage = "Retrieving filter settings from hardware...";
                 var names = await FilterWheelHardware.GetFilterNamesAsync();
+                BusyMessage = "Retrieving filter position offsets from hardware...";
                 var positionOffsets = await FilterWheelHardware.GetOffsetsAsync();
+                BusyMessage = "Retrieving filter focus offsets from profile...";
                 var focusOffsets = FilterWheelHardware.ReadFocusOffsetsFromProfile();
+                BusyMessage = "Populating filter settings in UI...";
                 Filters.Clear();
 
                 for (int i = 0; i < names.Length; i++)
                 {
+                    FilterWheelHardware.LogMessage("SetupViewModel", $"Loading filter {i + 1}: Name='{names[i]}', PositionOffset={positionOffsets[i]}, FocusOffset={focusOffsets[i]}");
                     Filters.Add(new FilterEntryViewModel(
                         index: i + 1,
                         name: names[i],
@@ -140,7 +150,8 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
             }
             finally
             {
-                isBusy = false;
+                IsBusy = false;
+                BusyMessage = "";
             }
         }
 
@@ -149,9 +160,10 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
         async partial void OnSelectedTabIndexChanged(int value)
         {
             if (value == 1)   // Tab 2 (0 = COM port tab)
+            {
                 await LoadFilterWheelDataAsync();
+            }
         }
-
 
         #endregion
     }

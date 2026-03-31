@@ -43,6 +43,7 @@
 	<ItemGroup>
 	  <None Remove="Resources\ASCOM.ico" />
 	  <None Remove="Resources\ASCOM.png" />
+	  <None Remove="Resources\FilterWheel.png" />
 	</ItemGroup>
 
 	<!-- Optional: Enable COM registration for ASCOM -->
@@ -105,6 +106,7 @@
 	<ItemGroup>
 	  <Resource Include="Resources\ASCOM.ico" />
 	  <Resource Include="Resources\ASCOM.png" />
+	  <Resource Include="Resources\FilterWheel.png" />
 	</ItemGroup>
 
 	<!-- Resources and settings are auto‑included, but we preserve generators -->
