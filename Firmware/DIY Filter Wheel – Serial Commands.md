@@ -50,9 +50,9 @@ P<n> Offset X
 
 ---
 
-## **Fn xxxx — Set Absolute Offset**
+## **Fn xxxx — Set Positional Offset**
 **Syntax:** `F<n> <number>`  
-Sets the offset for the filter in position `<n>` to an explicit value `<number>`.  
+Sets the position offset for the filter in position `<n>` to an explicit value `<number>`. This allows you to centeralise the filter position in the filter wheel opening.  
 Triggers a re-home and re-position.
 
 **Response:**
