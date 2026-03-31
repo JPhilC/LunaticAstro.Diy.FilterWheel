@@ -52,7 +52,7 @@ P<n> Offset X
 
 ## **Fn xxxx — Set Absolute Offset**
 **Syntax:** `F<n> <number>`  
-Sets the offset for the filter in position <n> to an explicit value <number>.  
+Sets the offset for the filter in position `<n>` to an explicit value `<number>`.  
 Triggers a re-home and re-position.
 
 **Response:**
