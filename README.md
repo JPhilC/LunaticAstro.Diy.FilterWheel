@@ -15,11 +15,14 @@ The Ardiuno sketch is in the Firmware folder and the ASCOM source code is in the
 
 The ASCOM drive passes ASCOMs Universal Conform tool and a log of the results is included in the ASCOM driver folder.
 
+I printed my filter wheel parts in Sunlu PEG-CF on a Bambu A1 and will only be attaching my small ASI678 panetary camera.
+
 ## Disclaimer
 
 The firmware and software in this project is provided “as is”, without warranty of any kind, express or implied.
 The author shall not be held liable for any damages, loss of data, hardware damage,
 or any other issues arising from the use of this software. Use at your own risk.
+3D printed components can be weak along the layer lines so be sensible about what equipment you attach to the filter wheel.
 
 ## License
 
