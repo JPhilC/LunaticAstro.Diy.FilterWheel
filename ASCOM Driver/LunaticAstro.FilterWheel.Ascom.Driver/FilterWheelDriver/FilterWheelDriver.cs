@@ -1,6 +1,6 @@
 // TODO fill in this information for your driver, then remove this line!
 //
-// ASCOM FilterWheel driver for LunaticAstroDiyFilterWheel
+// ASCOM FilterWheel driver for Lunatic Astro Arduino Nano FilterWheel
 //
 // Description:	 <To be completed by driver developer>
 //
@@ -26,18 +26,18 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
     // This code is mostly a presentation layer for the functionality in the FilterWheelHardware class. You should not need to change the contents of this file very much, if at all.
     // Most customisation will be in the FilterWheelHardware class, which is shared by all instances of the driver, and which must handle all aspects of communicating with your device.
     //
-    // Your driver's DeviceID is ASCOM.LunaticAstroDiyFilterWheel.FilterWheel
+    // Your driver's DeviceID is ASCOM.LunaticAstroNanoFilterWheel.FilterWheel
     //
-    // The COM Guid attribute sets the CLSID for ASCOM.LunaticAstroDiyFilterWheel.FilterWheel
-    // The COM ClassInterface/None attribute prevents an empty interface called _LunaticAstroDiyFilterWheel from being created and used as the [default] interface
+    // The COM Guid attribute sets the CLSID for ASCOM.LunaticAstroNanoFilterWheel.FilterWheel
+    // The COM ClassInterface/None attribute prevents an empty interface called _LunaticAstroNanoFilterWheel from being created and used as the [default] interface
     //
 
     /// <summary>
-    /// ASCOM FilterWheel Driver for LunaticAstroDiyFilterWheel.
+    /// ASCOM FilterWheel Driver for LunaticAstroNanoFilterWheel.
     /// </summary>
     [ComVisible(true)]
     [Guid("4666e34b-23d9-4487-b0fc-1468e1250f44")]
-    [ProgId("ASCOM.LunaticAstroDiyFilterWheel.FilterWheel")]
+    [ProgId("ASCOM.LunaticAstroNanoFilterWheel.FilterWheel")]
     [ServedClassName("Lunatic Astro Nano Filter Wheel")] // Driver description that appears in the Chooser, customise as required
     [ClassInterface(ClassInterfaceType.None)]
     public class FilterWheel : ReferenceCountedObjectBase, IFilterWheelV3, IDisposable
@@ -61,7 +61,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
         #region Initialisation and Dispose
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LunaticAstroDiyFilterWheel"/> class. Must be public to successfully register for COM.
+        /// Initializes a new instance of the <see cref="LunaticAstroNanoFilterWheel"/> class. Must be public to successfully register for COM.
         /// </summary>
         public FilterWheel()
         {
@@ -79,7 +79,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
                 // By default all driver logging will appear in Hardware log file
                 // If you would like each instance of the driver to have its own log file as well, uncomment the lines below
 
-                tl = new TraceLogger("", "LunaticAstroDiyFilterWheel.Driver"); // Remove the leading ASCOM. from the ProgId because this will be added back by TraceLogger.
+                tl = new TraceLogger("", "LunaticAstroNanoFilterWheel.Driver"); // Remove the leading ASCOM. from the ProgId because this will be added back by TraceLogger.
                 SetTraceState();
 
                 // Initialise the hardware if required
@@ -98,7 +98,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
             catch (Exception ex)
             {
                 LogMessage("FilterWheel", $"Initialisation exception: {ex}");
-                MessageBox.Show($"{ex.Message}", "Exception creating ASCOM.LunaticAstroDiyFilterWheel.FilterWheel", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{ex.Message}", "Exception creating ASCOM.LunaticAstroNanoFilterWheel.FilterWheel", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

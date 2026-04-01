@@ -1,0 +1,39 @@
+﻿<Project Sdk="WixToolset.Sdk/6.0.2">
+
+	<PropertyGroup>
+
+		<EnableDefaultItems>false</EnableDefaultItems>
+
+		<!-- MSI output name -->
+		<OutputName>LunaticAstro.Nano.FilterWheel.Driver</OutputName>
+
+		<!-- Build an MSI package -->
+		<OutputType>Package</OutputType>
+
+		<!-- Installer version -->
+		<Version>1.0.0</Version>
+
+		<!-- Optional: treat warnings as errors -->
+		<!-- <TreatWarningsAsErrors>true</TreatWarningsAsErrors> -->
+	</PropertyGroup>
+
+	<!-- Disable automatic wildcard inclusion -->
+	<ItemGroup>
+		<Compile Remove="**/*.wxs" />
+	</ItemGroup>
+	
+	<!-- Explicitly include only the files you want -->
+	<ItemGroup>
+		<!-- Include all WiX source files -->
+		<Compile Include="Package.wxs" />
+		<Compile Include="Folders.wxs" />
+		<Compile Include="Components.wxs" />
+		<Compile Include="Registry.wxs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Localisation file -->
+		<WixLocalization Include="Package.en-us.wxl" />
+	</ItemGroup>
+
+</Project>

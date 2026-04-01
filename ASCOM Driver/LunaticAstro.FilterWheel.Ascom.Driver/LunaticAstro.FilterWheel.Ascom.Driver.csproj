@@ -5,7 +5,7 @@
 		<TargetFramework>net48</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<RootNamespace>ASCOM.LunaticAstro.FilterWheel</RootNamespace>
-		<AssemblyName>ASCOM.LunaticAstro.Diy.FilterWheel</AssemblyName>
+		<AssemblyName>ASCOM.LunaticAstro.Nano.FilterWheel</AssemblyName>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<BaseOutputPath>bin</BaseOutputPath>

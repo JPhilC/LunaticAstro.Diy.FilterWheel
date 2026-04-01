@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package
+		Name="$(loc.ProductName)"
+		Manufacturer="$(loc.Manufacturer)"
+		Version="1.0.0"
+		UpgradeCode="{A8F8E8C3-8C4E-4F3A-9E0F-4C4B8F1C1A22}"
+		Scope="perMachine"
+		InstallerVersion="500">
+
+		<MajorUpgrade DowngradeErrorMessage="$(loc.DowngradeError)" />
+		
+		<!-- REQUIRED to avoid WIX0089 -->
+		<StandardDirectory Id="CommonFilesFolder" />
+
+		<Feature Id="MainFeature" Title="$(loc.FeatureTitle)" Level="1">
+			<ComponentGroupRef Id="DriverComponents" />
+			<ComponentGroupRef Id="RegistryComponents" />
+		</Feature>
+	</Package>
+</Wix>

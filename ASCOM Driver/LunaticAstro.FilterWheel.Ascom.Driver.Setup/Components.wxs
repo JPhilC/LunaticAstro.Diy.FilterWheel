@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+	<Fragment>
+
+		<Component Id="FilterWheelExeComponent" Guid="{D7C0A3C5-4E0A-4C8F-9F8E-1C2B3A4D5E6F}">
+			<File
+			  Id="FilterWheelExe"
+			  Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.LunaticAstro.Nano.FilterWheel.exe"
+			  KeyPath="yes" />
+
+			<!-- LocalServer32 registration MUST be in the same component as the EXE -->
+			<RegistryKey Root="HKCR" Key="CLSID\{4666e34b-23d9-4487-b0fc-1468e1250f44}\LocalServer32">
+				<RegistryValue Value="[#FilterWheelExe]" Type="string" />
+			</RegistryKey>
+
+		</Component>
+
+		<ComponentGroup Id="DriverComponents">
+			<ComponentRef Id="FilterWheelExeComponent" />
+		</ComponentGroup>
+
+	</Fragment>
+
+</Wix>

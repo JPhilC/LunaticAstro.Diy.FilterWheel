@@ -1,10 +1,14 @@
 <Solution>
   <Configurations>
     <Platform Name="Any CPU" />
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="LunaticAstro.FilterWheel.Ascom.Driver.Setup/LunaticAstro.FilterWheel.Ascom.Driver.Setup.wixproj" Type="b7dd6f7e-def8-4e67-b5b7-07ef123db6f0" Id="e2038cf4-2aa1-4276-b3bf-f7fe5700dd27">
+    <Platform Solution="*|Any CPU" Project="x64" />
+  </Project>
   <Project Path="LunaticAstro.FilterWheel.Ascom.Driver/LunaticAstro.FilterWheel.Ascom.Driver.csproj" Id="68ce03ed-fc7e-4b09-b9a3-1b0f2e607d5e">
-    <Platform Solution="Debug|x86" Project="x86" />
-    <Platform Solution="Release|x86" Project="x86" />
+    <Platform Solution="*|x86" Project="x86" />
   </Project>
 </Solution>

@@ -1,5 +1,5 @@
 ﻿//
-// ASCOM FilterWheel hardware class for the Lunatic Astro Diy FilterWheel
+// ASCOM FilterWheel hardware class for the Lunatic Astro Nano FilterWheel
 //
 // Implements:	ASCOM FilterWheel interface version: 1.0.
 // Author:		Phil Crompton <phil@unitysoftware.co.uk>
@@ -36,7 +36,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
     //
 
     /// <summary>
-    /// ASCOM FilterWheel hardware class for LunaticAstroDiyFilterWheel.
+    /// ASCOM FilterWheel hardware class for LunaticAstroNanoFilterWheel.
     /// </summary>
     [HardwareClass()] // Class attribute flag this as a device hardware class that needs to be disposed by the local server when it exits.
     internal static class FilterWheelHardware
@@ -72,7 +72,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
 
                 // Create the hardware trace logger in the static initialiser.
                 // All other initialisation should go in the InitialiseHardware method.
-                Tl = new TraceLogger("", "LunaticAstroDiyFilterWheel.Hardware");
+                Tl = new TraceLogger("", "LunaticAstroNanoFilterWheel.Hardware");
 
                 // DriverProgId has to be set here because it used by ReadProfile to get the TraceState flag.
                 DriverProgId = FilterWheel.DriverProgId; // Get this device's ProgID so that it can be used to read the Profile configuration values
