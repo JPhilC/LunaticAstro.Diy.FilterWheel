@@ -696,7 +696,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
                 try
                 {
                     CheckConnected("FocusOffsets");
-                    int[] focusoffsets = FilterWheelHardware.Offsets;
+                    int[] focusoffsets = FilterWheelHardware.FocusOffsets;
                     LogMessage("FocusOffsets", focusoffsets.ToString());
                     return focusoffsets;
                 }

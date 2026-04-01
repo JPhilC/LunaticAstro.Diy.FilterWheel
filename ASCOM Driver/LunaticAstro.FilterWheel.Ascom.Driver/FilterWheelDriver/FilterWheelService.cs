@@ -93,7 +93,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
         // 2. OFFSET COMMANDS
         // ------------------------------------------------------------
 
-        public async Task<int[]> GetOffsetsAsync(int slotCount)
+        public async Task<int[]> GetPositionOffsetsAsync(int slotCount)
         {
             int[] offsets = new int[slotCount];
 
@@ -117,24 +117,8 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
             return offsets;
         }
 
-        public async Task<(int position, int offset)> GetOffsetForFilterAsync(int position)
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-            if (position < 1 || position > 8)
-                throw new ArgumentOutOfRangeException(nameof(position));
-
-            await _client.SendCommandAsync($"O{position}");
-            var response = await _client.WaitForResponseAsync(
-            line =>
-                line.StartsWith($"P{position}", StringComparison.OrdinalIgnoreCase) &&
-                line.Contains("Offset", StringComparison.OrdinalIgnoreCase),
-            cts.Token);
-            return ParsePositionOffset(response);
-        }
-
-
-        public async Task<(int position, int offset)> SetOffsetAsync(int position, int value)
+        public async Task<(int position, int offset)> SetPositionOffsetAsync(int position, int value)
         {
             if (position < 1 || position > 8)
                 throw new ArgumentOutOfRangeException(nameof(position));
@@ -270,7 +254,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
             return speed;
         }
 
-        public async Task<(int position, int offset)> GetCurrentFilterOffsetAsync()
+        public async Task<(int position, int offset)> GetCurrentPositionOffsetAsync()
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             await _client.SendCommandAsync("I5");

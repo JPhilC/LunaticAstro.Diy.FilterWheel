@@ -1,6 +1,5 @@
 ﻿using ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel;
 using System;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -60,6 +59,11 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.Views
             }
         }
 
+        private async void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            if (e.Row.Item is FilterEntryViewModel vm)
+                await vm.CommitEditsAsync();
+        }
 
         private void BrowseToAscom(object sender, MouseButtonEventArgs e)
         {

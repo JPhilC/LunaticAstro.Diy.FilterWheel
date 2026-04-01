@@ -28,6 +28,9 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
         [ObservableProperty]
         private ObservableCollection<FilterEntryViewModel> filters = new();
 
+        private List<FilterEntryViewModel> _originalFilters = new();
+
+
         [ObservableProperty]
         private int selectedTabIndex;
 
@@ -36,6 +39,10 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
 
         [ObservableProperty]
         private string busyMessage;
+
+        [ObservableProperty]
+        private FilterEntryViewModel? selectedFilter;
+
 
         public SetupViewModel(Guid uniqueId)
         {
@@ -79,36 +86,41 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
         }
 
         [RelayCommand]
-        private void Cancel()
+        private async Task Cancel()
         {
+            await CancelFilterSettingsAsync();
             CloseRequested?.Invoke(false);
         }
 
 
-        private IAsyncRelayCommand? _saveFilterSettingsCommand;
-        public IAsyncRelayCommand SaveFilterSettingsCommand =>
-            _saveFilterSettingsCommand ??= new AsyncRelayCommand(SaveFilterSettingsAsync);
-
-        private async Task SaveFilterSettingsAsync()
-        {
-            var names = Filters.Select(f => f.Name).ToArray();
-            var positionOffsets = Filters.Select(f => f.PositionOffset).ToArray();
-            var focusOffsets = Filters.Select(f => f.FocusOffset).ToArray();
-
-            await FilterWheelHardware.SetFilterNamesAsync(names);
-            await FilterWheelHardware.SetOffsetsAsync(positionOffsets);
-
-            FilterWheelHardware.WriteFocusOffsetsToProfile(focusOffsets);
-        }
-
-
-        private IAsyncRelayCommand? _cancelFilterSettingsCommand;
-        public IAsyncRelayCommand CancelFilterSettingsCommand =>
-            _cancelFilterSettingsCommand ??= new AsyncRelayCommand(CancelFilterSettingsAsync);
 
         private async Task CancelFilterSettingsAsync()
         {
-            await LoadFilterWheelDataAsync();
+            IsBusy = true;
+            BusyMessage = "Reverting changes…";
+
+            try
+            {
+                // Restore UI list
+                Filters = new ObservableCollection<FilterEntryViewModel>(
+                    _originalFilters.Select(f =>
+                        new FilterEntryViewModel(f.Index, f.Name, f.PositionOffset, f.FocusOffset))
+                );
+
+                // Push restored values back to hardware
+                foreach (var f in _originalFilters)
+                {
+                    await FilterWheelHardware.SetFilterNameAsync(f.Index, f.Name);
+                    await FilterWheelHardware.SetPositionOffsetAsync(f.Index, f.PositionOffset);
+                    FilterWheelHardware.WriteFocusOffsetToProfile(f.Index, f.FocusOffset);
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+                BusyMessage = "";
+                CloseRequested?.Invoke(false);   // false = cancelled
+            }
         }
 
         private void SaveSettings()
@@ -121,20 +133,19 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
             FilterWheelHardware.WriteProfile();
         }
 
+
+        private bool _initialising;
         private async Task LoadFilterWheelDataAsync()
         {
             try
             {
+                _initialising = true;
                 BusyMessage = "Connecting to filter wheel and loading settings...";
                 IsBusy = true;
                 await FilterWheelHardware.ConnectAsync(_uniqueId);
-                BusyMessage = "Retrieving filter settings from hardware...";
                 var names = await FilterWheelHardware.GetFilterNamesAsync();
-                BusyMessage = "Retrieving filter position offsets from hardware...";
-                var positionOffsets = await FilterWheelHardware.GetOffsetsAsync();
-                BusyMessage = "Retrieving filter focus offsets from profile...";
+                var positionOffsets = await FilterWheelHardware.GetPositionOffsetsAsync();
                 var focusOffsets = FilterWheelHardware.ReadFocusOffsetsFromProfile();
-                BusyMessage = "Populating filter settings in UI...";
                 Filters.Clear();
 
                 for (int i = 0; i < names.Length; i++)
@@ -146,7 +157,16 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
                         positionOffset: positionOffsets[i],
                         focusOffset: focusOffsets[i]
                     ));
+                    _originalFilters.Add(new FilterEntryViewModel(
+                        index: i + 1,
+                        name: names[i],
+                        positionOffset: positionOffsets[i],
+                        focusOffset: focusOffsets[i]
+                    ));
                 }
+
+                SelectedFilter = Filters.FirstOrDefault();
+                _initialising = false;
             }
             finally
             {
@@ -155,6 +175,19 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
             }
         }
 
+
+        private async Task MoveToFilterAsync(int firmwareIndex)
+        {
+            try
+            {
+                IsBusy = true;
+                await FilterWheelHardware.GoToFilterAsync(firmwareIndex);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
 
         #region Partial methods ....
         async partial void OnSelectedTabIndexChanged(int value)
@@ -165,6 +198,14 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
             }
         }
 
+        partial void OnSelectedFilterChanged(FilterEntryViewModel? value)
+        {
+            if (_initialising || value is null)
+                return;
+
+            // Index is 1‑based for display, firmware expects 0‑based
+            _ = MoveToFilterAsync(value.Index);
+        }
         #endregion
     }
 }
