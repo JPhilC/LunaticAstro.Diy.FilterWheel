@@ -605,6 +605,34 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
         }
 
         /// <summary>
+        /// Write the COM port name to the ASCOM Profile store. This is used by the setup dialogue 
+        /// to persist changes to the COM port without affecting other profile values such as 
+        /// trace state and filter focus offsets.
+        /// </summary>
+        internal static void WriteComPortToProfile()
+        {
+            using (Profile driverProfile = new Profile())
+            {
+                driverProfile.DeviceType = "FilterWheel";
+                driverProfile.WriteValue(DriverProgId, ComPortProfileName, ComPort.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Write the trace state configuration to the ASCOM Profile store. This is used by 
+        /// the setup dialogue to persist changes to the trace state without affecting other 
+        /// profile values such as COM port name and filter focus offsets.
+        /// </summary>
+        internal static void WriteTlEnabledToProfile()
+        {
+            using (Profile driverProfile = new Profile())
+            {
+                driverProfile.DeviceType = "FilterWheel";
+                driverProfile.WriteValue(DriverProgId, TraceStateProfileName, Tl.Enabled.ToString());
+            }
+        }
+
+        /// <summary>
         /// Reads the focus offsets from the ASCOM Profile store and updates the internal _focusOffsets array. 
         /// This should be called during initialisation to load any saved offsets from the profile. The offsets are logged for diagnostic purposes.
         /// </summary>

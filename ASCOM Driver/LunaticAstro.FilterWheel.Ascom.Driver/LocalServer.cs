@@ -321,7 +321,7 @@ namespace ASCOM.LocalServer
             catch (Exception e)
             {
                 TL.LogMessageCrLf("PopulateListOfAscomDrivers", $"Exception: {e}");
-                MessageBox.Show($"Failed to load served COM class assembly from within this local server - {e.Message}", "Rotator Simulator", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                MessageBox.Show($"Failed to load served COM class assembly from within this local server - {e.Message}", "Lunatic Astro Nano Filter Wheel", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return false;
             }
 

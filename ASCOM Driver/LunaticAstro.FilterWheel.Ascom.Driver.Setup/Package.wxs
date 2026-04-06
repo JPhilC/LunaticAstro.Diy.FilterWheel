@@ -1,21 +1,50 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
 	<Package
-		Name="$(loc.ProductName)"
-		Manufacturer="$(loc.Manufacturer)"
+		Name="Lunatic Astro Filter Wheel ASCOM Driver"
+		Manufacturer="Lunatic Astro"
 		Version="1.0.0"
 		UpgradeCode="{A8F8E8C3-8C4E-4F3A-9E0F-4C4B8F1C1A22}"
 		Scope="perMachine"
 		InstallerVersion="500">
 
-		<MajorUpgrade DowngradeErrorMessage="$(loc.DowngradeError)" />
-		
-		<!-- REQUIRED to avoid WIX0089 -->
+		<MajorUpgrade DowngradeErrorMessage="A newer version of this driver is already installed." />
+
 		<StandardDirectory Id="CommonFilesFolder" />
 
-		<Feature Id="MainFeature" Title="$(loc.FeatureTitle)" Level="1">
+		<Feature Id="MainFeature" Title="Filter Wheel Driver" Level="1">
 			<ComponentGroupRef Id="DriverComponents" />
-			<ComponentGroupRef Id="RegistryComponents" />
 		</Feature>
+
+		<!-- CUSTOM ACTIONS LIVE HERE -->
+
+		<CustomAction Id="RegisterDriver"
+              FileRef="FilterWheelExe"
+              ExeCommand="/register"
+              Execute="deferred"
+              Impersonate="no"
+              Return="check" />
+
+		<CustomAction Id="UnregisterDriver"
+					  FileRef="FilterWheelExe"
+					  ExeCommand="/unregister"
+					  Execute="deferred"
+					  Impersonate="no"
+					  Return="check" />
+
+
+		<InstallExecuteSequence>
+			<Custom Action="RegisterDriver"
+					After="InstallFiles"
+					Condition="NOT Installed" />
+
+			<Custom Action="UnregisterDriver"
+					Before="RemoveFiles"
+					Condition="Installed" />
+		</InstallExecuteSequence>
+
+
 	</Package>
+
 </Wix>

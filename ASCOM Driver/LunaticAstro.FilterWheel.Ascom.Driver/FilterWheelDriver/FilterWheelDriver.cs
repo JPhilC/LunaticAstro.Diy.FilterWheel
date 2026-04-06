@@ -26,9 +26,9 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
     // This code is mostly a presentation layer for the functionality in the FilterWheelHardware class. You should not need to change the contents of this file very much, if at all.
     // Most customisation will be in the FilterWheelHardware class, which is shared by all instances of the driver, and which must handle all aspects of communicating with your device.
     //
-    // Your driver's DeviceID is ASCOM.LunaticAstroNanoFilterWheel.FilterWheel
+    // Your driver's DeviceID is ASCOM.LunaticAstro.Nano.FilterWheel.FilterWheel
     //
-    // The COM Guid attribute sets the CLSID for ASCOM.LunaticAstroNanoFilterWheel.FilterWheel
+    // The COM Guid attribute sets the CLSID for ASCOM.LunaticAstro.Nano.FilterWheel.FilterWheel
     // The COM ClassInterface/None attribute prevents an empty interface called _LunaticAstroNanoFilterWheel from being created and used as the [default] interface
     //
 
@@ -37,7 +37,7 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver
     /// </summary>
     [ComVisible(true)]
     [Guid("4666e34b-23d9-4487-b0fc-1468e1250f44")]
-    [ProgId("ASCOM.LunaticAstroNanoFilterWheel.FilterWheel")]
+    [ProgId("ASCOM.LunaticAstro.Nano.FilterWheel.FilterWheel")]
     [ServedClassName("Lunatic Astro Nano Filter Wheel")] // Driver description that appears in the Chooser, customise as required
     [ClassInterface(ClassInterfaceType.None)]
     public class FilterWheel : ReferenceCountedObjectBase, IFilterWheelV3, IDisposable

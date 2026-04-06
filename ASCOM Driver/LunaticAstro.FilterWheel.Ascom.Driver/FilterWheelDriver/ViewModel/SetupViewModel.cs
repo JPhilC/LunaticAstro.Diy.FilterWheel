@@ -190,6 +190,18 @@ namespace ASCOM.LunaticAstro.FilterWheel.FilterWheelDriver.ViewModel
         }
 
         #region Partial methods ....
+        async partial void OnSelectedComPortChanged(string? value)
+        {
+            FilterWheelHardware.ComPort = SelectedComPort ?? string.Empty;
+            FilterWheelHardware.WriteComPortToProfile();
+        }
+
+        async partial void OnTraceEnabledChanged(bool value)
+        {
+            FilterWheelHardware.Tl.Enabled = value;
+            FilterWheelHardware.WriteTlEnabledToProfile();
+        }
+
         async partial void OnSelectedTabIndexChanged(int value)
         {
             if (value == 1)   // Tab 2 (0 = COM port tab)

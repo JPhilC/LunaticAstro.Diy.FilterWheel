@@ -3,18 +3,40 @@
 
 	<Fragment>
 
-		<Component Id="FilterWheelExeComponent" Guid="{D7C0A3C5-4E0A-4C8F-9F8E-1C2B3A4D5E6F}">
-			<File
-			  Id="FilterWheelExe"
-			  Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.LunaticAstro.Nano.FilterWheel.exe"
-			  KeyPath="yes" />
+		<!-- Place the EXE inside the FilterWheelFolder directory -->
+		<DirectoryRef Id="FilterWheelFolder">
 
-			<!-- LocalServer32 registration MUST be in the same component as the EXE -->
-			<RegistryKey Root="HKCR" Key="CLSID\{4666e34b-23d9-4487-b0fc-1468e1250f44}\LocalServer32">
-				<RegistryValue Value="[#FilterWheelExe]" Type="string" />
-			</RegistryKey>
+			<Component Id="FilterWheelExeComponent" Guid="{D7C0A3C5-4E0A-4C8F-9F8E-1C2B3A4D5E6F}">
 
-		</Component>
+				<File
+				  Id="FilterWheelExe"
+				  Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.LunaticAstro.Nano.FilterWheel.exe"
+				  KeyPath="yes" />
+
+				<File Id="FilterWheelConfig" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.LunaticAstro.Nano.FilterWheel.exe.config" />
+				<File Id="ASCOMAstrometry" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Astrometry.dll" />
+				<File Id="ASCOMAttributes" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Attributes.dll" />
+				<File Id="ASCOMCache" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Cache.dll" />
+				<File Id="ASCOMControls" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Controls.dll" />
+				<File Id="ASCOMDeviceInterfaces" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.DeviceInterfaces.dll" />
+				<File Id="ASCOMDriverAccess" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.DriverAccess.dll" />
+				<File Id="ASCOMExceptions" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Exceptions.dll" />
+				<File Id="ASCOMInternalExtensions" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Internal.Extensions.dll" />
+				<File Id="ASCOMSettingsProvider" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.SettingsProvider.dll" />
+				<File Id="ASCOMUtilities" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Utilities.dll" />
+				<File Id="ASCOMUtilitiesVideo" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\ASCOM.Utilities.Video.dll" />
+
+				<File Id="CommunityToolkitMvvm" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\CommunityToolkit.Mvvm.dll" />
+				<File Id="MicrosoftBclAsyncInterfaces" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\Microsoft.Bcl.AsyncInterfaces.dll" />
+				<File Id="SystemBuffers" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\System.Buffers.dll" />
+				<File Id="SystemMemory" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\System.Memory.dll" />
+				<File Id="SystemNumericsVectors" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\System.Numerics.Vectors.dll" />
+				<File Id="SystemUnsafe" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\System.Runtime.CompilerServices.Unsafe.dll" />
+				<File Id="SystemTasksExtensions" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\System.Threading.Tasks.Extensions.dll" />
+				<File Id="SystemAnnotations" Source="..\LunaticAstro.FilterWheel.Ascom.Driver\bin\x86\Release\System.ComponentModel.Annotations.dll" />
+			</Component>
+			
+		</DirectoryRef>
 
 		<ComponentGroup Id="DriverComponents">
 			<ComponentRef Id="FilterWheelExeComponent" />
