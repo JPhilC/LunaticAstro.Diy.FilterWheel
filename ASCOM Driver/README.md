@@ -1,4 +1,8 @@
-An ASCOM Driver for the Lunatic Astro DIY Filterwheel
+An ASCOM Driver for the Lunatic Astro DIY Filterwheel.
+
+## The latest version of the ASCOM Driver
+[**⬇️ Download Lunatic Astro ASCOM Driver (MSI)**](./LunaticAstro.Nano.FilterWheel.Driver_V1.0.0.msi)
+
 
 ## Disclaimer
 This software is provided “as is”, without warranty of any kind, express or implied. 
