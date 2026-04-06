@@ -13,6 +13,9 @@
 
 		<StandardDirectory Id="CommonFilesFolder" />
 
+		<MediaTemplate EmbedCab="yes" />
+
+
 		<Feature Id="MainFeature" Title="Filter Wheel Driver" Level="1">
 			<ComponentGroupRef Id="DriverComponents" />
 		</Feature>
