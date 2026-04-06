@@ -1,20 +1,32 @@
 #include <AccelStepper.h>
 #include <EEPROM.h>
 
+/* ==========================================================================  
+   Lunatic Astro Filter Wheel Firmware  
+   Copyright © 2026 Phil Crompton, Lunatic Astro  
+   All rights reserved.
+
+   This firmware is provided for use with Lunatic Astro hardware projects.  
+   Redistribution or modification is permitted only with explicit permission  
+   from the copyright holder.
+
+   For project information, updates, and documentation, visit Lunatic Astro.  
+   ========================================================================== */
+
+
 // =========================================================
 // CONFIGURATION
 // =========================================================
 
 #define DEBUG 0  // Set to 1 for verbose debug output
-
+#define FIRMWARE_VERSION "2.0"
 // Pins
 #define SENSOR A3
 #define hallPower A2
 #define hallCom A1
 #define upButton 4
 #define downButton 5
-#define buzzerPin 2
-#define ledPin 3
+#define ledPin 10
 
 // Motor pins (28BYJ-48 + ULN2003)
 #define IN1 9
@@ -38,8 +50,7 @@
 
 
 // Optional peripherals
-#define buzzerConnected 0
-#define ledConnected 0
+#define ledConnected 1
 
 // Motor type (fixed)
 #define motorType 1  // 1 = unipolar 28BYJ-48
@@ -65,6 +76,15 @@ bool activeHigh = true;
 int analogSensorThreshold = 650;
 char filterNames[MAX_FILTERS + 1][NAME_SLOT_SIZE];
 const char DEFAULT_FILTER_NAME[] = "<empty>";
+
+// LED flash state machine
+unsigned long ledLastToggle = 0;
+int ledFlashCount = 0;
+int ledFlashTarget = 0;
+int ledInterval = 0;
+bool ledState = false;
+bool ledActive = false;
+
 
 // =========================================================
 // EEPROM HELPERS
@@ -309,6 +329,49 @@ void detectSensorType() {
 
   saveSensorSettings();
 }
+// =========================================================
+// LED
+// =========================================================
+void startLedFlash(int flashes, int intervalMs) {
+#if ledConnected
+  ledActive = true;
+  ledFlashCount = 0;
+  ledFlashTarget = flashes * 2;  // ON+OFF = 2 toggles per flash
+  ledInterval = intervalMs;
+  ledLastToggle = millis();
+  ledState = false;
+  if (DEBUG) {
+    Serial.println("LED LOW");
+  }
+  digitalWrite(ledPin, LOW);
+#endif
+}
+
+void updateLed() {
+#if ledConnected
+  if (!ledActive) return;
+
+  if (millis() - ledLastToggle >= ledInterval) {
+    ledLastToggle = millis();
+    ledState = !ledState;
+    if (DEBUG) {
+      Serial.print("LED: ");
+      Serial.println(ledState);
+    }
+    digitalWrite(ledPin, ledState);
+
+    ledFlashCount++;
+    if (ledFlashCount >= ledFlashTarget) {
+      ledActive = false;
+      digitalWrite(ledPin, LOW);
+      if (DEBUG) {
+        Serial.println("LED: LOW");
+      }
+    }
+  }
+#endif
+}
+
 
 // =========================================================
 // MOTOR + FEEDBACK HELPERS
@@ -401,7 +464,9 @@ bool homeWheel() {
 // =========================================================
 
 void goToLocation(int newPos, bool silent) {
-  if (newPos < 1 || newPos > numberOfFilters) return;
+  if (newPos < 1 || newPos > numberOfFilters) 
+    return;
+  
   if (DEBUG) {
     Serial.print("GoTo ");
     Serial.print(newPos);
@@ -422,6 +487,7 @@ void goToLocation(int newPos, bool silent) {
   if (!silent) {
     Serial.println("P" + String(currPos));
   }
+  startLedFlash(currPos, 120);  // N flashes, 120ms interval
 }
 
 void unwindBacklash() {
@@ -453,12 +519,13 @@ void setup() {
   pinMode(IN4, OUTPUT);
   pinMode(upButton, INPUT_PULLUP);
   pinMode(downButton, INPUT_PULLUP);
-  pinMode(buzzerPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
 
   digitalWrite(hallCom, LOW);
   digitalWrite(hallPower, HIGH);
+  digitalWrite(ledPin, LOW);
   sendSerial("CONNECTED");
+
   initialise();
 }
 
@@ -467,6 +534,7 @@ void setup() {
 // =========================================================
 
 void loop() {
+  updateLed();
   handleButtons();
   handleSerialCommands();
   handleErrors();
@@ -591,6 +659,9 @@ void handleButtons() {
         goToLocation(currPos + 1, false);
         sendSerial("P" + String(currPos));
       }
+      else {
+           startLedFlash(currPos, 120);
+      }
 
       lastUpPress = now;
     }
@@ -606,6 +677,9 @@ void handleButtons() {
       if (currPos > 1) {
         goToLocation(currPos - 1, false);
         sendSerial("P" + String(currPos));
+      }
+      else {
+           startLedFlash(currPos, 120);
       }
 
       lastDownPress = now;
@@ -755,11 +829,11 @@ void handleGoto(char c1) {
 
 void handleInfo(char c1) {
   switch (c1) {
-    case '0': sendSerial("Nano Filter Wheel"); break;             // Product Name
-    case '1': sendSerial("FW1.0.0"); break;                       // Firmware version
-    case '2': sendSerial("P" + String(currPos)); break;           // Current filter position
-    case '3': sendSerial("DIY"); break;                           // Serial number
-    case '4': sendSerial("MaxSpeed " + String(maxSpeed)); break;  // Max speed
+    case '0': sendSerial("Lunatic Astro Nano Filter Wheel"); break;  // Product Name
+    case '1': sendSerial(FIRMWARE_VERSION); break;                   // Firmware version
+    case '2': sendSerial("P" + String(currPos)); break;              // Current filter position
+    case '3': sendSerial("DIY"); break;                              // Serial number
+    case '4': sendSerial("MaxSpeed " + String(maxSpeed)); break;     // Max speed
     case '5': sendOffsetReport(currPos); break;
     case '6': sendSerial("Threshold " + String(analogSensorThreshold)); break;
     case '7': sendSerial("FilterSlots " + String(numberOfFilters)); break;
