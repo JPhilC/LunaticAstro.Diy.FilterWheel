@@ -10,7 +10,7 @@ The firmware in this project expects the following Arduino Nano pin outs:
 - A2 - Hall sensor (power (centre pin on sensor))
 - A3 - Hall sensor (sensor S)
 ### Digital pins
-- 3 LED
+- 10 LED
 - 4 Up button
 - 5 Down button
 - 6 Stepper IN2
